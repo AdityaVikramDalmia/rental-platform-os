@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_CONVEX_URL: ${NEXT_PUBLIC_CONVEX_URL:-https://replace-me.convex.cloud}
+        NEXT_PUBLIC_CONVEX_SITE_URL: ${NEXT_PUBLIC_CONVEX_SITE_URL:-https://replace-me.convex.site}
+        NEXT_PUBLIC_WORKOS_REDIRECT_URI: ${NEXT_PUBLIC_WORKOS_REDIRECT_URI:-https://replace-me.invalid/callback}
+    environment:
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-client_REPLACE_ME}
+      WORKOS_API_KEY: ${WORKOS_API_KEY:-sk_test_REPLACE_ME}
+      WORKOS_WEBHOOK_SECRET: ${WORKOS_WEBHOOK_SECRET:-whsec_REPLACE_ME}
+      WORKOS_COOKIE_PASSWORD: ${WORKOS_COOKIE_PASSWORD:-REPLACE_ME_WITH_OPENSSL_RAND_HEX_32}
+      NEXT_PUBLIC_CONVEX_URL: ${NEXT_PUBLIC_CONVEX_URL:-https://replace-me.convex.cloud}
+      NEXT_PUBLIC_CONVEX_SITE_URL: ${NEXT_PUBLIC_CONVEX_SITE_URL:-https://replace-me.convex.site}
+      NEXT_PUBLIC_WORKOS_REDIRECT_URI: ${NEXT_PUBLIC_WORKOS_REDIRECT_URI:-https://replace-me.invalid/callback}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:-REPLACE_ME}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

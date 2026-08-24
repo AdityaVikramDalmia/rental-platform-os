@@ -1,0 +1,783 @@
+import {
+  CHECKLIST_DEPTH,
+  CHECKLIST_ITEM_TYPE,
+  type ChecklistDepth,
+  type ChecklistItemType,
+} from "../constants";
+
+export type ChecklistTemplateItemPayload = {
+  item_id: string;
+  label: string;
+  item_type: ChecklistItemType;
+  is_required: boolean;
+  requires_photo: boolean;
+  min_depth: ChecklistDepth;
+};
+
+export type ChecklistTemplateSectionPayload = {
+  section_id: string;
+  title: string;
+  description?: string;
+  items: ChecklistTemplateItemPayload[];
+};
+
+export type ChecklistTemplatePayload = {
+  name: string;
+  description?: string;
+  depth: ChecklistDepth;
+  is_active: boolean;
+  is_deleted: boolean;
+  sections: ChecklistTemplateSectionPayload[];
+};
+
+const DEPTH_ORDER: Record<ChecklistDepth, number> = {
+  [CHECKLIST_DEPTH.LIGHT]: 0,
+  [CHECKLIST_DEPTH.MEDIUM]: 1,
+  [CHECKLIST_DEPTH.FULL]: 2,
+};
+
+const PROPERTY_INSPECTION_SECTION_DEFINITIONS: ChecklistTemplateSectionPayload[] = [
+  {
+    section_id: "sec-entrance-hallway",
+    title: "Entrance & Hallway",
+    description: "First-impression checks for flat access and corridor condition.",
+    items: [
+      {
+        item_id: "item-entrance-door-condition",
+        label: "Main entrance door condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-main-lock-deadbolt-working",
+        label: "Main lock and deadbolt working",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-hallway-floor-condition",
+        label: "Hallway flooring and skirting condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-major-damage-entrance-photo",
+        label: "Major damage photo (if any) near entrance",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-doorbell-intercom-working",
+        label: "Doorbell/intercom functioning",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-flat-number-nameplate-visible",
+        label: "Flat number and nameplate clearly visible",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-door-viewer-video-phone-condition",
+        label: "Door viewer/video phone condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-living-room",
+    title: "Living Room",
+    description: "Core habitability checks for daily-use common space.",
+    items: [
+      {
+        item_id: "item-living-room-overall-condition",
+        label: "Living room overall condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-living-fan-lights-working",
+        label: "Fans and lights functioning",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-living-windows-grill-condition",
+        label: "Windows and grill condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-living-major-damage-photo",
+        label: "Major damage photo in living room (if any)",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-living-switchboard-condition",
+        label: "Main switchboard and plug points condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-living-natural-light-ventilation-notes",
+        label: "Natural light and ventilation notes",
+        item_type: CHECKLIST_ITEM_TYPE.TEXT,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-living-ac-condition",
+        label: "Living room AC condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-living-balcony-slider-condition",
+        label: "Balcony slider/door track condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-living-wall-paint-finish-condition",
+        label: "Wall paint and finish condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-kitchen",
+    title: "Kitchen",
+    description: "Functional checks for modular kitchen, appliances, and utilities.",
+    items: [
+      {
+        item_id: "item-kitchen-modular-cabinets-condition",
+        label: "Modular kitchen cabinets condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-kitchen-countertop-sink-condition",
+        label: "Countertop and sink condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-kitchen-chimney-hob-working",
+        label: "Chimney and hob basic working check",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-kitchen-appliances-condition",
+        label: "Kitchen appliances condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-kitchen-inverter-connection-point",
+        label: "Inverter connection point available",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-kitchen-overall-photo",
+        label: "Overall kitchen photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-kitchen-water-pressure-drainage",
+        label: "Water pressure and sink drainage check",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-kitchen-gas-pipeline-point",
+        label: "Gas pipeline or cylinder point available",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-kitchen-shutter-alignment-condition",
+        label: "Cabinet shutter alignment condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-kitchen-chimney-suction-condition",
+        label: "Chimney suction condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-kitchen-hob-burner-ignition",
+        label: "Hob burner ignition check",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-kitchen-ro-water-purifier-condition",
+        label: "RO/water purifier condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-kitchen-sink-trap-leakage-photo",
+        label: "Sink trap leakage photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-kitchen-socket-load-test",
+        label: "Kitchen electrical socket load test",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-master-bedroom",
+    title: "Master Bedroom",
+    description: "Primary bedroom condition and fixture checks.",
+    items: [
+      {
+        item_id: "item-master-bedroom-overall-condition",
+        label: "Master bedroom overall condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-master-wardrobe-storage-condition",
+        label: "Wardrobe and storage condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-master-window-grill-net-condition",
+        label: "Window/grill/net condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-master-ac-point-working",
+        label: "AC point available and working",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-master-wall-dampness-photo",
+        label: "Wall dampness photo (if any)",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-master-attached-bathroom-door-latch",
+        label: "Attached bathroom door latch condition",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-master-wardrobe-hinge-smoothness",
+        label: "Wardrobe hinge smoothness",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-master-bed-back-wall-photo",
+        label: "Bed-back wall photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-master-fan-regulator-working",
+        label: "Fan regulator working",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-bathrooms",
+    title: "Bathroom(s)",
+    description: "Sanitary, leakage, and geyser readiness checks.",
+    items: [
+      {
+        item_id: "item-bathroom-fixtures-condition",
+        label: "Bathroom fixtures condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-bathroom-geyser-point-available",
+        label: "Geyser point available",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-bathroom-leakage-dampness-photo",
+        label: "Leakage/dampness photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-bathroom-flush-drainage-working",
+        label: "Flush and drainage working",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-bathroom-exhaust-fan-working",
+        label: "Exhaust fan working",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-bathroom-shower-mixer-condition",
+        label: "Shower and mixer condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-bathroom-washbasin-trap-leakage-photo",
+        label: "Washbasin trap leakage photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-bathroom-geyser-operational-test",
+        label: "Geyser operational test",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-bathroom-floor-slope-condition",
+        label: "Bathroom floor slope and water flow condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-balcony-terrace",
+    title: "Balcony/Terrace",
+    description: "Safety, drainage, and utility readiness checks for balcony spaces.",
+    items: [
+      {
+        item_id: "item-balcony-floor-railing-condition",
+        label: "Balcony floor and railing condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-balcony-grill-safety-mesh",
+        label: "Balcony grill/safety mesh present",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-balcony-overall-photo",
+        label: "Overall balcony photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.LIGHT,
+      },
+      {
+        item_id: "item-balcony-drain-outlet-clear",
+        label: "Balcony drain outlet clear",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-balcony-utility-area-condition",
+        label: "Utility wash area condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-balcony-grill-rust-condition",
+        label: "Balcony grill rust/corrosion condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-balcony-rainwater-drain-test",
+        label: "Rainwater drain test",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-balcony-waterproofing-signs-photo",
+        label: "Waterproofing signs photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-electrical-plumbing",
+    title: "Electrical & Plumbing",
+    description: "Core service-line checks for supply, safety, and continuity.",
+    items: [
+      {
+        item_id: "item-electrical-main-db-board-condition",
+        label: "Main DB board condition",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO_CONDITION,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-electrical-mcb-labeling",
+        label: "MCB labeling available",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-electrical-inverter-connection-point",
+        label: "Dedicated inverter connection point",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-plumbing-water-tank-supply-stability",
+        label: "Water tank supply stable",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-plumbing-tap-pressure-rating",
+        label: "Tap pressure condition",
+        item_type: CHECKLIST_ITEM_TYPE.CONDITION,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-electrical-earth-leakage-breaker-present",
+        label: "Earth leakage breaker present",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-electrical-meter-reading",
+        label: "Current electricity meter reading",
+        item_type: CHECKLIST_ITEM_TYPE.NUMBER,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-plumbing-shaft-leakage-photo",
+        label: "Plumbing shaft leakage photo",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-plumbing-sump-pump-status-notes",
+        label: "Sump/pump status notes",
+        item_type: CHECKLIST_ITEM_TYPE.TEXT,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-building-common-areas",
+    title: "Building Common Areas",
+    description: "Building-wide amenities and access checks relevant to tenancy.",
+    items: [
+      {
+        item_id: "item-common-lift-working",
+        label: "Lift working condition",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-common-parking-slot-allocation-notes",
+        label: "Parking slot allocation notes",
+        item_type: CHECKLIST_ITEM_TYPE.TEXT,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-common-generator-backup-available",
+        label: "Generator backup available",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.MEDIUM,
+      },
+      {
+        item_id: "item-common-staircase-lighting-working",
+        label: "Staircase lighting working",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-common-fire-exit-signage-present",
+        label: "Fire exit signage present",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-common-security-desk-staffing-notes",
+        label: "Security desk staffing notes",
+        item_type: CHECKLIST_ITEM_TYPE.TEXT,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-safety-security",
+    title: "Safety & Security",
+    description: "Life-safety and surveillance readiness checks.",
+    items: [
+      {
+        item_id: "item-safety-smoke-detector-present",
+        label: "Smoke detector present",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-safety-fire-extinguisher-service-date",
+        label: "Fire extinguisher service date notes",
+        item_type: CHECKLIST_ITEM_TYPE.TEXT,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-safety-cctv-coverage-adequate",
+        label: "CCTV coverage appears adequate",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-safety-main-door-deadbolt-photo",
+        label: "Main door deadbolt photo evidence",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: true,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+  {
+    section_id: "sec-documentation-legal",
+    title: "Documentation & Legal",
+    description: "Documents needed before lease closure and handover.",
+    items: [
+      {
+        item_id: "item-docs-owner-kyc-collected",
+        label: "Owner KYC documents collected",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: true,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-docs-society-noc-available",
+        label: "Society NOC available",
+        item_type: CHECKLIST_ITEM_TYPE.CHECKBOX,
+        is_required: false,
+        requires_photo: false,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+      {
+        item_id: "item-docs-latest-utility-bill-photo",
+        label: "Latest utility bill photo uploaded",
+        item_type: CHECKLIST_ITEM_TYPE.PHOTO,
+        is_required: false,
+        requires_photo: true,
+        min_depth: CHECKLIST_DEPTH.FULL,
+      },
+    ],
+  },
+];
+
+function buildSectionsForDepth(depth: ChecklistDepth): ChecklistTemplateSectionPayload[] {
+  const depthRank = DEPTH_ORDER[depth];
+
+  return PROPERTY_INSPECTION_SECTION_DEFINITIONS.map((section) => {
+    const items = section.items.filter((item) => DEPTH_ORDER[item.min_depth] <= depthRank);
+
+    return {
+      section_id: section.section_id,
+      title: section.title,
+      description: section.description,
+      items,
+    };
+  }).filter((section) => section.items.length > 0);
+}
+
+export const PROPERTY_INSPECTION_TEMPLATE_LIGHT: ChecklistTemplatePayload = {
+  name: "Property Inspection - Light",
+  description: "Quick room-by-room checklist for high-signal property readiness checks.",
+  depth: CHECKLIST_DEPTH.LIGHT,
+  is_active: true,
+  is_deleted: false,
+  sections: buildSectionsForDepth(CHECKLIST_DEPTH.LIGHT),
+};
+
+export const PROPERTY_INSPECTION_TEMPLATE_MEDIUM: ChecklistTemplatePayload = {
+  name: "Property Inspection - Medium",
+  description: "Detailed inspection checklist with utilities and common-area validation.",
+  depth: CHECKLIST_DEPTH.MEDIUM,
+  is_active: true,
+  is_deleted: false,
+  sections: buildSectionsForDepth(CHECKLIST_DEPTH.MEDIUM),
+};
+
+export const PROPERTY_INSPECTION_TEMPLATE_FULL: ChecklistTemplatePayload = {
+  name: "Property Inspection - Full",
+  description:
+    "Comprehensive inspection checklist including safety, compliance, and document readiness.",
+  depth: CHECKLIST_DEPTH.FULL,
+  is_active: true,
+  is_deleted: false,
+  sections: buildSectionsForDepth(CHECKLIST_DEPTH.FULL),
+};
+
+export const PROPERTY_INSPECTION_TEMPLATES: ChecklistTemplatePayload[] = [
+  PROPERTY_INSPECTION_TEMPLATE_LIGHT,
+  PROPERTY_INSPECTION_TEMPLATE_MEDIUM,
+  PROPERTY_INSPECTION_TEMPLATE_FULL,
+];

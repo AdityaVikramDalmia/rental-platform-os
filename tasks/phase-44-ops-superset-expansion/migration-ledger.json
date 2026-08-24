@@ -1,0 +1,335 @@
+[
+  {
+    "module": "leads",
+    "function": "create",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T01-ops-can-create-lead",
+    "status": "pending"
+  },
+  {
+    "module": "leads",
+    "function": "updateByGuard",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T01-ops-can-update-own-need-info-lead",
+    "status": "pending"
+  },
+  {
+    "module": "leads",
+    "function": "getMyLeads",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T01-ops-can-list-own-leads",
+    "status": "pending"
+  },
+  {
+    "module": "leads",
+    "function": "getMyLeadById",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T01-ops-can-read-own-lead-by-id",
+    "status": "pending"
+  },
+  {
+    "module": "leads",
+    "function": "getSubmissionCount",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T01-ops-submission-count-respects-limit",
+    "status": "pending"
+  },
+  {
+    "module": "tenantInquiries",
+    "function": "acceptBounty",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T02-ops-can-accept-bounty",
+    "status": "pending"
+  },
+  {
+    "module": "tenantInquiries",
+    "function": "listBounties",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T02-ops-can-list-available-bounties",
+    "status": "pending"
+  },
+  {
+    "module": "tenantInquiries",
+    "function": "listByGuard",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T02-ops-can-list-assigned-bounties",
+    "status": "pending"
+  },
+  {
+    "module": "visits",
+    "function": "start",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T03-ops-can-start-assigned-visit",
+    "status": "pending"
+  },
+  {
+    "module": "visits",
+    "function": "complete",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T03-ops-can-complete-assigned-visit",
+    "status": "pending"
+  },
+  {
+    "module": "visits",
+    "function": "getMyVisits",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T03-ops-can-list-own-visits",
+    "status": "pending"
+  },
+  {
+    "module": "visits",
+    "function": "getMyTodayVisits",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T03-ops-can-list-today-visits",
+    "status": "pending"
+  },
+  {
+    "module": "buildings",
+    "function": "listBySocietyForGuard",
+    "current_gate": "requireGuard",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T04-ops-building-picker-society-guardrail",
+    "status": "pending"
+  },
+  {
+    "module": "users",
+    "function": "updateProfile",
+    "current_gate": "requireGuard",
+    "action": "defer",
+    "owner_epic": "P44-E07",
+    "verification_test_id": "P44-E07-T03-ops-profile-read-only-when-deferred",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "getMyMetrics",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T04-ops-metrics-query",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "getRemainingLeads",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T04-ops-remaining-leads-query",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "getMyProfile",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T04-ops-profile-query-returns-guard-profile",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "recordFingerprint",
+    "current_gate": "requireGuardAuth",
+    "action": "defer",
+    "owner_epic": "P44-E07",
+    "verification_test_id": "P44-E07-T04-fingerprint-hidden-for-ops",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "getMyQualitySnapshot",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T03-ops-quality-snapshot",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "getMyStreaks",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T03-ops-streak-query",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "getMyCards",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T03-ops-incentive-cards-query",
+    "status": "pending"
+  },
+  {
+    "module": "payouts",
+    "function": "getGuardEarnings",
+    "current_gate": "requireGuardAuth",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T04-ops-earnings-query",
+    "status": "pending"
+  },
+  {
+    "module": "guardShifts",
+    "function": "getMySchedule",
+    "current_gate": "user.user_type === GUARD",
+    "action": "keep_guard_only",
+    "owner_epic": "P44-E07",
+    "verification_test_id": "P44-E07-T02-ops-does-not-see-shifts-surface",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "getMyLeaderboardPosition",
+    "current_gate": "requireAuth + user_type === GUARD",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T02-ops-leaderboard-position",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "checkAndSuggest",
+    "current_gate": "internal guard check",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T01-ops-suggestion-engine-eligible",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "updateStreak",
+    "current_gate": "internal guard check",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T01-ops-streak-update",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "recomputeQualityScore",
+    "current_gate": "internal guard check",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T01-ops-quality-recompute",
+    "status": "pending"
+  },
+  {
+    "module": "incentives",
+    "function": "computePayoutAdjustment",
+    "current_gate": "internal guard check",
+    "action": "migrate",
+    "owner_epic": "P44-E06",
+    "verification_test_id": "P44-E06-T04-ops-payout-adjustment",
+    "status": "pending"
+  },
+  {
+    "module": "visits",
+    "function": "ensureActiveGuardInSociety",
+    "current_gate": "assigned user must be GUARD",
+    "action": "migrate",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T03-assigned-ops-field-worker-validation",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "list",
+    "current_gate": "skips non-GUARD users",
+    "action": "migrate",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T01-admin-filter-ops-only",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "getById",
+    "current_gate": "null for non-GUARD",
+    "action": "migrate",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T01-admin-can-open-ops-field-worker-detail",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "search",
+    "current_gate": "filters user_type === GUARD",
+    "action": "migrate",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T01-admin-search-all-personas",
+    "status": "pending"
+  },
+  {
+    "module": "guards",
+    "function": "getLeaderboard",
+    "current_gate": "guard-only rows",
+    "action": "migrate",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T02-admin-leaderboard-filter",
+    "status": "pending"
+  },
+  {
+    "module": "analytics",
+    "function": "computeSocietyComparison",
+    "current_gate": "guard count only",
+    "action": "migrate",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T03-analytics-guard-vs-ops-counts",
+    "status": "pending"
+  },
+  {
+    "module": "referrals",
+    "function": "recordGuardReferral",
+    "current_gate": "GUARD referral semantics",
+    "action": "keep_guard_only",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T04-ops-referral-attempt-rejected",
+    "status": "pending"
+  },
+  {
+    "module": "visits",
+    "function": "getGuardAvailability",
+    "current_gate": "requireGuard; guard scheduling helper",
+    "action": "keep_guard_only",
+    "owner_epic": "P44-E05",
+    "verification_test_id": "P44-E05-T03-guard-availability-remains-guard-only",
+    "status": "pending"
+  },
+  {
+    "module": "analytics",
+    "function": "getOverviewKPIs",
+    "current_gate": "admin query with requireBackoffice",
+    "action": "no_migration",
+    "owner_epic": "P44-E08",
+    "verification_test_id": "P44-E08-T03-overview-kpis-no-guard-gate-confirmed",
+    "status": "pending"
+  }
+]

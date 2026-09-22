@@ -30,5 +30,7 @@ export async function signOutAction(): Promise<void> {
     secure,
   });
 
-  redirect("/");
+  // Avoid an extra redirect through `/`: Next's Server Action response can copy
+  // its Location header and make the client follow ordinary HTML instead of RSC.
+  redirect("/homepage");
 }

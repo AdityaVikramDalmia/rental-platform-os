@@ -6,6 +6,7 @@ development deployment into a public portfolio demo.
 - [01-isolation.md](01-isolation.md) — current account and data-isolation assessment
 - [02-provisioning.md](02-provisioning.md) — guarded account provisioning and password rotation
 - [03-verification.md](03-verification.md) — checks required before publishing credentials
+- [04-results.md](04-results.md) — dated local verification evidence for commit `cad517f`
 
 ## Current decision
 

@@ -1,0 +1,50 @@
+{
+  "target": "https://curious-dove-754.convex.cloud",
+  "verified": true,
+  "relevant_functions": [
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Action",
+      "identifier": "actions/workos.js:ensureDevWorkosUsers",
+      "returns": null,
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {}
+      },
+      "functionType": "Action",
+      "identifier": "seedDemo.js:mega",
+      "returns": null,
+      "visibility": {
+        "kind": "internal"
+      }
+    },
+    {
+      "args": {
+        "type": "object",
+        "value": {
+          "intended_persona": {
+            "fieldType": {
+              "type": "string"
+            },
+            "optional": true
+          }
+        }
+      },
+      "functionType": "Query",
+      "identifier": "users.js:resolvePostAuthDestination",
+      "returns": null,
+      "visibility": {
+        "kind": "public"
+      }
+    }
+  ],
+  "public_mega_seed_present": false
+}

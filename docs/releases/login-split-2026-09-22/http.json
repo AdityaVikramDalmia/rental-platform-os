@@ -1,0 +1,61 @@
+{
+  "recorded_at": "2026-09-22T10:52:44.492822+00:00",
+  "web_source": "3b42a2726e8b1e748d2fdc432693d6879d7fdc9c",
+  "origin": "https://rentalos.dev.bytenexuscloud.com",
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "final_path": "/homepage",
+      "has_application_error": false
+    },
+    {
+      "path": "/homepage",
+      "status": 200,
+      "final_path": "/homepage",
+      "has_application_error": false
+    },
+    {
+      "path": "/listings",
+      "status": 200,
+      "final_path": "/listings",
+      "has_application_error": false
+    },
+    {
+      "path": "/admin/login",
+      "status": 200,
+      "final_path": "/admin/login",
+      "has_application_error": false
+    },
+    {
+      "path": "/ops/login",
+      "status": 200,
+      "final_path": "/ops/login",
+      "has_application_error": false
+    },
+    {
+      "path": "/guard/login",
+      "status": 200,
+      "final_path": "/guard/login",
+      "has_application_error": false
+    },
+    {
+      "path": "/tenant/login",
+      "status": 200,
+      "final_path": "/tenant/login",
+      "has_application_error": false
+    },
+    {
+      "path": "/owner/login",
+      "status": 200,
+      "final_path": "/owner/login",
+      "has_application_error": false
+    },
+    {
+      "path": "/healthz",
+      "status": 200,
+      "final_path": "/healthz",
+      "has_application_error": false
+    }
+  ]
+}

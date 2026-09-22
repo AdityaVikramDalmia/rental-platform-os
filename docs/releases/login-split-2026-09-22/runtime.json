@@ -1,0 +1,38 @@
+{
+  "recorded_at": "2026-09-22T10:52:35.177582+00:00",
+  "web_source": "3b42a2726e8b1e748d2fdc432693d6879d7fdc9c",
+  "backend_source": "8a8074277c4e30e20a4c6eb5e4e576205f3fe5b4",
+  "gitops_image_commit": "055ab589d5bf6d2c5b91e55930f3f606b3d82459",
+  "image": "harbor.dev.bytenexuscloud.com/apps/rental-platform-os:3b42a27@sha256:833707cbbf5572cf1f56bfe1e799f899a7459a206913602e5d1cbbcb79bd047d",
+  "ready_replicas": 1,
+  "available_replicas": 1,
+  "pods": [
+    {
+      "name": "rentalos-5fd94c995-lrhgq",
+      "phase": "Running",
+      "containers": [
+        {
+          "ready": true,
+          "restart_count": 0,
+          "image_id": "harbor.dev.bytenexuscloud.com/apps/rental-platform-os@sha256:833707cbbf5572cf1f56bfe1e799f899a7459a206913602e5d1cbbcb79bd047d"
+        }
+      ]
+    }
+  ],
+  "argo_health": "Healthy",
+  "argo_sync": "OutOfSync",
+  "argo_revision": "055ab589d5bf6d2c5b91e55930f3f606b3d82459",
+  "out_of_sync_resources": [
+    {
+      "kind": "ExternalSecret",
+      "name": "rentalos-secrets"
+    }
+  ],
+  "external_secret_conditions": [
+    {
+      "type": "Ready",
+      "status": "True",
+      "reason": "SecretSynced"
+    }
+  ]
+}

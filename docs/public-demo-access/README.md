@@ -15,5 +15,7 @@ are seeded fixtures, but they share one mutable development deployment. The know
 have Super Admin access and must never be published. A dedicated, permission-limited demo admin is
 still required.
 
-The application changes in this branch prepare five explicit entry routes and close the unsafe seed
-paths, but they have not been deployed and no hosted credentials have been changed.
+The five explicit entry routes and seed safeguards were deployed to the existing BNC application
+on 2026-09-22, followed by a verified sign-out redirect correction. See the
+[rollout record](../releases/login-split-2026-09-22/README.md). No hosted credentials were changed.
+This deploys the login fixes; it does not establish the separate isolated public-demo environment.

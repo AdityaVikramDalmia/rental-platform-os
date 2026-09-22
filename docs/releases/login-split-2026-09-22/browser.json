@@ -1,0 +1,51 @@
+{
+  "recorded_at": "2026-09-22T10:36:52.941039+00:00",
+  "browser": "Ego Browser",
+  "initial_web_source": "8a80742",
+  "backend_source": "8a80742",
+  "authenticated_portals": [
+    {
+      "persona": "tenant",
+      "path": "/tenant/dashboard",
+      "authenticated_dashboard_rendered": true
+    },
+    {
+      "persona": "owner",
+      "path": "/owner/dashboard",
+      "authenticated_dashboard_rendered": true
+    },
+    {
+      "persona": "admin",
+      "path": "/admin/dashboard",
+      "authenticated_dashboard_rendered": true
+    },
+    {
+      "persona": "ops",
+      "path": "/ops/dashboard",
+      "authenticated_dashboard_rendered": true
+    },
+    {
+      "persona": "guard",
+      "path": "/guard/dashboard",
+      "authenticated_dashboard_rendered": true
+    }
+  ],
+  "negative_role_check": {
+    "actor": "tenant fixture",
+    "requested": "/admin/dashboard",
+    "result": "/admin/login?error=role_mismatch",
+    "alert_visible": true
+  },
+  "development_login_http_status": 404,
+  "session_isolation": "Cookies were cleared only for the Rental OS and its dedicated staging AuthKit origins between fixture identities; no profile-wide clear. No credential values captured.",
+  "finding": "Initial sign-out cleared the local app cookie but produced a Next Server Action error after following a second redirect. Reproduced in the local image; direct homepage correction is commit 3b42a27.",
+  "scope": "Existing fixture sign-ins only; no data-changing product workflow, account provisioning, password reset, seeding, or public credential publication.",
+  "corrected_signout": {
+    "source": "3b42a27",
+    "recorded_at": "2026-09-22T10:49:56.008Z",
+    "path": "/homepage",
+    "signInPresent": true,
+    "errorBoundary": false,
+    "appSessionCookiePresent": false
+  }
+}

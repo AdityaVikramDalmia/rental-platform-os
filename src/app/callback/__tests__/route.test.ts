@@ -27,19 +27,19 @@ function createMockUser(email: string): User {
   };
 }
 
-function createMockAuthSuccessData(email: string): HandleAuthSuccessData {
+function createMockAuthSuccessData(email: string, state?: string): HandleAuthSuccessData {
   return {
     accessToken: "access_token",
     refreshToken: "refresh_token",
     user: createMockUser(email),
-    state: undefined,
+    state,
   };
 }
 
-function mockCallbackSuccess(email: string) {
+function mockCallbackSuccess(email: string, state?: string) {
   vi.mocked(handleAuth).mockImplementation((options) => {
     return async () => {
-      await options?.onSuccess?.(createMockAuthSuccessData(email));
+      await options?.onSuccess?.(createMockAuthSuccessData(email, state));
       return new Response(null, {
         status: 307,
         headers: {
@@ -71,6 +71,22 @@ describe("callback redirect mapping", () => {
     expect(response.headers.get("location")).toBe(POST_AUTH_PATHNAME);
   });
 
+  it("preserves a valid portal intent through the callback", async () => {
+    mockCallbackSuccess("tenant1@test.demorentals.com", JSON.stringify({ portal: "tenant" }));
+
+    const response = await GET(new NextRequest("http://localhost:3000/callback"));
+
+    expect(response.headers.get("location")).toBe("/post-auth?portal=tenant");
+  });
+
+  it("rejects an unknown portal intent", async () => {
+    mockCallbackSuccess("tenant1@test.demorentals.com", JSON.stringify({ portal: "root" }));
+
+    const response = await GET(new NextRequest("http://localhost:3000/callback"));
+
+    expect(response.headers.get("location")).toBe("/?error=portal_state_invalid");
+  });
+
   it("never leaks the server bind host into the redirect location", async () => {
     mockCallbackSuccess("owner1@test.demorentals.com");
 
@@ -81,5 +97,6 @@ describe("callback redirect mapping", () => {
 
   it("uses the canonical post-auth resolver pathname", () => {
     expect(getPostAuthRedirectUrl()).toBe(POST_AUTH_PATHNAME);
+    expect(getPostAuthRedirectUrl("owner")).toBe("/post-auth?portal=owner");
   });
 });

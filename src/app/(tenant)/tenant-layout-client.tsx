@@ -68,7 +68,7 @@ export function TenantLayoutInner({
     }
 
     if (!currentUser || !hasTenantPersona) {
-      router.replace("/post-auth");
+      router.replace(currentUser ? "/tenant/login?error=role_mismatch" : "/tenant/login");
     }
   }, [currentUser, hasTenantPersona, isLoading, router]);
 

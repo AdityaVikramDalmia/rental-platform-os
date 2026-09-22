@@ -276,14 +276,19 @@ export const unsuspendGuard = internalAction({
   },
 });
 
-// DEV ONLY — `npx convex run actions/workos:ensureDevWorkosUsers`
+// GUARDED DEMO ONLY — callable by maintainers after explicitly enabling demo seeding.
 export const ensureDevWorkosUsers = internalAction({
   args: {},
   handler: async (ctx): Promise<Record<string, string>> => {
+    if (process.env.DEMO_SEEDING_ENABLED !== "true") {
+      throw new Error(
+        "Demo account provisioning is disabled. Set DEMO_SEEDING_ENABLED=true only on an isolated demo deployment.",
+      );
+    }
+
     const devAccounts = [
       {
         email: "admin@example.com",
-        password: "DevAdmin123!",
         firstName: "Test Admin",
         userType: "ADMIN",
         identifier: "admin@example.com",
@@ -291,7 +296,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "agent@example.com",
-        password: "DevAgent123!",
         firstName: "Agent Bot",
         userType: "ADMIN",
         identifier: "agent@example.com",
@@ -299,7 +303,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "9999999999@guards.local",
-        password: "DevGuard123!",
         firstName: "Test Guard",
         userType: "GUARD",
         identifier: "9999999999",
@@ -307,7 +310,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: `8888888888${OPS_EMAIL_DOMAIN}`,
-        password: "DevOps123!",
         firstName: "Test OPS Agent",
         userType: "OPS",
         identifier: "8888888888",
@@ -315,7 +317,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "9876543210@guards.local",
-        password: "DevGuard123!",
         firstName: "Rajesh Kumar",
         userType: "GUARD",
         identifier: "9876543210",
@@ -323,7 +324,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "9765432109@guards.local",
-        password: "DevGuard123!",
         firstName: "Suresh Patel",
         userType: "GUARD",
         identifier: "9765432109",
@@ -331,7 +331,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: `7777777777${OPS_EMAIL_DOMAIN}`,
-        password: "DevOps123!",
         firstName: "Priya Sharma",
         userType: "OPS",
         identifier: "7777777777",
@@ -339,7 +338,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "tenant1@test.demorentals.com",
-        password: "DevTenant123!",
         firstName: "Ankit Mehta",
         userType: "TENANT",
         identifier: "tenant1@test.demorentals.com",
@@ -347,7 +345,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "tenant2@test.demorentals.com",
-        password: "DevTenant123!",
         firstName: "Sneha Reddy",
         userType: "TENANT",
         identifier: "tenant2@test.demorentals.com",
@@ -355,7 +352,6 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "owner1@test.demorentals.com",
-        password: "DevOwner123!",
         firstName: "Ramesh Gupta",
         userType: "OWNER",
         identifier: "owner1@test.demorentals.com",
@@ -363,13 +359,20 @@ export const ensureDevWorkosUsers = internalAction({
       },
       {
         email: "owner2@test.demorentals.com",
-        password: "DevOwner123!",
         firstName: "Kavita Joshi",
         userType: "OWNER",
         identifier: "owner2@test.demorentals.com",
         identifierType: "email" as const,
       },
     ];
+
+    const passwordEnvByUserType: Record<string, string> = {
+      ADMIN: "DEMO_ADMIN_PASSWORD",
+      GUARD: "DEMO_GUARD_PASSWORD",
+      OPS: "DEMO_OPS_PASSWORD",
+      TENANT: "DEMO_TENANT_PASSWORD",
+      OWNER: "DEMO_OWNER_PASSWORD",
+    };
 
     const syncPayload: Array<{
       identifier: string;
@@ -387,20 +390,20 @@ export const ensureDevWorkosUsers = internalAction({
       if (existing.data.length > 0) {
         workosUserId = existing.data[0].id;
 
-        try {
-          await workos.userManagement.updateUser({
-            userId: workosUserId,
-            password: account.password,
-          });
-        } catch {
-          console.warn(`Could not sync password for ${account.email} — manual reset may be needed`);
-        }
-
         console.log(`Found existing WorkOS user: ${account.email} → ${workosUserId}`);
       } else {
+        const passwordEnvName = passwordEnvByUserType[account.userType];
+        const password = passwordEnvName ? process.env[passwordEnvName] : undefined;
+
+        if (!passwordEnvName || !password) {
+          throw new Error(
+            `Missing ${passwordEnvName ?? "demo password configuration"}; refusing to create a demo account with a fallback password.`,
+          );
+        }
+
         const user = await workos.userManagement.createUser({
           email: account.email,
-          password: account.password,
+          password,
           firstName: account.firstName,
           emailVerified: true,
         });

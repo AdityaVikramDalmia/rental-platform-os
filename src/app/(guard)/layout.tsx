@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { api } from "../../../convex/_generated/api";
-import { isFieldWorkerUserType, USER_TYPE } from "../../../lib/constants";
+import { isFieldWorkerUserType } from "../../../lib/constants";
 import { ConvexClientProvider } from "@/components/shared/ConvexClientProvider";
 import { GuardLayoutInner } from "./guard-layout-client";
 
@@ -49,20 +49,12 @@ export default async function GuardLayout({
     redirect("/guard/login");
   }
 
-  if (!isFieldWorkerUserType(currentUser.user_type)) {
-    if (currentUser.user_type === USER_TYPE.ADMIN) {
-      redirect("/admin/dashboard");
-    }
+  const hasFieldWorkerPersona =
+    currentUser.user_types?.some((persona) => isFieldWorkerUserType(persona)) ??
+    isFieldWorkerUserType(currentUser.user_type);
 
-    if (currentUser.user_type === USER_TYPE.TENANT) {
-      redirect("/listings");
-    }
-
-    if (currentUser.user_type === USER_TYPE.OWNER) {
-      redirect("/owner/dashboard");
-    }
-
-    redirect("/homepage");
+  if (!hasFieldWorkerPersona) {
+    redirect("/guard/login?error=role_mismatch");
   }
 
   if (currentUser.status === "BANNED") {

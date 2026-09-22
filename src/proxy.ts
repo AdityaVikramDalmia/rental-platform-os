@@ -8,6 +8,8 @@ export const proxy = authkitMiddleware({
       "/guard/login",
       "/admin/login",
       "/ops/login",
+      "/tenant/login",
+      "/owner/login",
       "/callback",
       "/post-auth",
       "/listing/(.*)",

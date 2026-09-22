@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ const opsLoginSchema = z.object({
 type OpsLoginValues = z.infer<typeof opsLoginSchema>;
 
 interface OpsLoginClientProps {
+  error?: string;
   signInUrl: string;
 }
 
@@ -44,7 +45,7 @@ function sanitizePhoneInput(value: string): string {
   return digitsOnly.slice(0, 10);
 }
 
-export function OpsLoginClient({ signInUrl }: OpsLoginClientProps) {
+export function OpsLoginClient({ error, signInUrl }: OpsLoginClientProps) {
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<OpsLoginValues>({
@@ -89,6 +90,20 @@ export function OpsLoginClient({ signInUrl }: OpsLoginClientProps) {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {error === "role_mismatch" || error === "access_not_configured" ? (
+              <div
+                role="alert"
+                className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              >
+                <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                <p>
+                  {error === "access_not_configured"
+                    ? "This OPS account has no role assigned. Contact an administrator."
+                    : "This account does not have OPS portal access."}
+                </p>
+              </div>
+            ) : null}
+
             <div className="space-y-3">
               <Button asChild className="w-full" variant="outline">
                 <Link href={signInUrl}>

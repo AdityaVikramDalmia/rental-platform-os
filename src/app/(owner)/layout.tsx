@@ -31,13 +31,13 @@ export default async function OwnerLayout({
   const { accessToken, ...initialAuth } = auth;
 
   if (!accessToken) {
-    redirect("/admin/login");
+    redirect("/owner/login");
   }
 
   const currentUser = await fetchQuery(api.users.getCurrentUser, {}, { token: accessToken });
 
   if (!currentUser) {
-    redirect("/admin/login");
+    redirect("/owner/login");
   }
 
   const hasPersona = (persona: string) =>
@@ -56,7 +56,7 @@ export default async function OwnerLayout({
       redirect("/admin/dashboard");
     }
 
-    redirect("/homepage");
+    redirect("/owner/login?error=role_mismatch");
   }
 
   return (

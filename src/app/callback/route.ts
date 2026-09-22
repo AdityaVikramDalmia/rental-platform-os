@@ -1,29 +1,38 @@
 import { handleAuth } from "@workos-inc/authkit-nextjs";
 import type { NextRequest } from "next/server";
+import { isAuthPortalIntent, type AuthPortalIntent } from "../../../lib/authPortal";
 import { ADMIN_DASHBOARD_PATHNAME, getPostAuthRedirectUrl } from "./redirect";
 
-type InviteStatePayload = {
+type AuthStatePayload = {
   invite_token?: unknown;
+  portal?: unknown;
 };
 
-function extractInviteToken(payload: unknown): {
+function extractAuthState(payload: unknown): {
   inviteToken: string | null;
   hasInviteTokenField: boolean;
+  portal: AuthPortalIntent | null;
+  hasPortalField: boolean;
 } {
   if (!payload || typeof payload !== "object") {
-    return { inviteToken: null, hasInviteTokenField: false };
+    return {
+      inviteToken: null,
+      hasInviteTokenField: false,
+      portal: null,
+      hasPortalField: false,
+    };
   }
 
-  const parsed = payload as InviteStatePayload;
-  if (parsed.invite_token === undefined) {
-    return { inviteToken: null, hasInviteTokenField: false };
-  }
+  const parsed = payload as AuthStatePayload;
+  const hasInviteTokenField = parsed.invite_token !== undefined;
+  const hasPortalField = parsed.portal !== undefined;
+  const inviteToken =
+    typeof parsed.invite_token === "string" && parsed.invite_token.length > 0
+      ? parsed.invite_token
+      : null;
+  const portal = isAuthPortalIntent(parsed.portal) ? parsed.portal : null;
 
-  if (typeof parsed.invite_token === "string" && parsed.invite_token.length > 0) {
-    return { inviteToken: parsed.invite_token, hasInviteTokenField: true };
-  }
-
-  return { inviteToken: null, hasInviteTokenField: true };
+  return { inviteToken, hasInviteTokenField, portal, hasPortalField };
 }
 
 function tryParseJson(payload: string): unknown | null {
@@ -34,44 +43,53 @@ function tryParseJson(payload: string): unknown | null {
   }
 }
 
-function decodeInviteTokenFromState(state: string | undefined): {
+function decodeAuthState(state: string | undefined): {
   inviteToken: string | null;
   hasInvalidInviteState: boolean;
+  portal: AuthPortalIntent | null;
+  hasInvalidPortalState: boolean;
 } {
   if (!state) {
-    return { inviteToken: null, hasInvalidInviteState: false };
+    return {
+      inviteToken: null,
+      hasInvalidInviteState: false,
+      portal: null,
+      hasInvalidPortalState: false,
+    };
   }
 
   let hasInviteTokenField = false;
+  let hasPortalField = false;
 
-  {
-    const parsedRaw = tryParseJson(state);
-    if (parsedRaw !== null) {
-      const rawResult = extractInviteToken(parsedRaw);
+  const candidates = [
+    tryParseJson(state),
+    tryParseJson(Buffer.from(state, "base64").toString("utf-8")),
+  ];
 
-      if (rawResult.inviteToken) {
-        return { inviteToken: rawResult.inviteToken, hasInvalidInviteState: false };
+  for (const candidate of candidates) {
+    if (candidate !== null) {
+      const result = extractAuthState(candidate);
+
+      if (result.inviteToken || result.portal) {
+        return {
+          inviteToken: result.inviteToken,
+          hasInvalidInviteState: result.hasInviteTokenField && !result.inviteToken,
+          portal: result.portal,
+          hasInvalidPortalState: result.hasPortalField && !result.portal,
+        };
       }
 
-      hasInviteTokenField = hasInviteTokenField || rawResult.hasInviteTokenField;
+      hasInviteTokenField = hasInviteTokenField || result.hasInviteTokenField;
+      hasPortalField = hasPortalField || result.hasPortalField;
     }
   }
 
-  {
-    const decoded = Buffer.from(state, "base64").toString("utf-8");
-    const parsedBase64 = tryParseJson(decoded);
-    if (parsedBase64 !== null) {
-      const base64Result = extractInviteToken(parsedBase64);
-
-      if (base64Result.inviteToken) {
-        return { inviteToken: base64Result.inviteToken, hasInvalidInviteState: false };
-      }
-
-      hasInviteTokenField = hasInviteTokenField || base64Result.hasInviteTokenField;
-    }
-  }
-
-  return { inviteToken: null, hasInvalidInviteState: hasInviteTokenField };
+  return {
+    inviteToken: null,
+    hasInvalidInviteState: hasInviteTokenField,
+    portal: null,
+    hasInvalidPortalState: hasPortalField,
+  };
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -83,10 +101,16 @@ export async function GET(request: NextRequest): Promise<Response> {
     onSuccess: async ({ state }) => {
       didAuthSucceed = true;
 
-      const { inviteToken, hasInvalidInviteState } = decodeInviteTokenFromState(state);
+      const { inviteToken, hasInvalidInviteState, portal, hasInvalidPortalState } =
+        decodeAuthState(state);
 
       if (hasInvalidInviteState) {
         postAuthPathname = "/?error=invite_state_invalid";
+        return;
+      }
+
+      if (hasInvalidPortalState) {
+        postAuthPathname = "/?error=portal_state_invalid";
         return;
       }
 
@@ -95,7 +119,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         return;
       }
 
-      postAuthPathname = getPostAuthRedirectUrl();
+      postAuthPathname = getPostAuthRedirectUrl(portal ?? undefined);
     },
   });
 

@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { fetchQuery } from "convex/nextjs";
+import Link from "next/link";
 import {
   BadgeCheck,
   BarChart3,
@@ -16,6 +17,7 @@ import { api } from "../../../../convex/_generated/api";
 import { SYSTEM_CONFIG_KEYS } from "../../../../lib/constants";
 import { formatPhoneDisplay } from "../../../../lib/validators";
 import { OwnerServicesClient } from "./owner-services-client";
+import { Button } from "@/components/ui/button";
 
 type ContactSettings = {
   contactPhone: string | null;
@@ -137,12 +139,17 @@ export default async function OwnerServicesPage() {
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-2xl space-y-8 px-4 py-8 sm:py-12">
         {/* Header */}
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Owner Services</h1>
-          <p className="text-sm text-slate-600">
-            DemoRentals helps property owners stay hands-off while we handle tenant placement, rent
-            collection, and day-to-day management.
-          </p>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Owner Services</h1>
+            <p className="text-sm text-slate-600">
+              DemoRentals helps property owners stay hands-off while we handle tenant placement,
+              rent collection, and day-to-day management.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="shrink-0">
+            <Link href="/owner/login">Owner portal sign in</Link>
+          </Button>
         </header>
 
         {/* How It Works */}

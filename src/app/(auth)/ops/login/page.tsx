@@ -1,8 +1,14 @@
 import { getSignInUrl } from "@workos-inc/authkit-nextjs";
+import { encodeAuthPortalState } from "../../../../../lib/authPortal";
 import { OpsLoginClient } from "./ops-login-client";
 
-export default async function OpsLoginPage() {
-  const signInUrl = await getSignInUrl();
+type OpsLoginPageProps = {
+  searchParams: Promise<{ error?: string | string[] }>;
+};
 
-  return <OpsLoginClient signInUrl={signInUrl} />;
+export default async function OpsLoginPage({ searchParams }: OpsLoginPageProps) {
+  const { error } = await searchParams;
+  const signInUrl = await getSignInUrl({ state: encodeAuthPortalState("ops") });
+
+  return <OpsLoginClient signInUrl={signInUrl} error={Array.isArray(error) ? error[0] : error} />;
 }

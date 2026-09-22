@@ -42,7 +42,11 @@ export default async function OpsLayout({
     currentUser.user_types?.includes(USER_TYPE.OPS) ?? currentUser.user_type === USER_TYPE.OPS;
 
   if (!hasOpsPersona) {
-    redirect("/ops/login");
+    redirect("/ops/login?error=role_mismatch");
+  }
+
+  if (!currentUser.role_names?.length) {
+    redirect("/ops/login?error=access_not_configured");
   }
 
   if (currentUser.status === USER_STATUS.BANNED) {

@@ -3,7 +3,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { action, internalAction } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { internalMutation, internalQuery } from "./functions";
 import { SYSTEM_CONFIG_KEYS } from "../lib/constants";
 
@@ -2904,6 +2904,12 @@ export const seedDemoVersion = internalMutation({
 export const mega = internalAction({
   args: {},
   handler: async (ctx) => {
+    if (process.env.DEMO_SEEDING_ENABLED !== "true") {
+      throw new Error(
+        "Demo seeding is disabled. Set DEMO_SEEDING_ENABLED=true only on an isolated demo deployment.",
+      );
+    }
+
     const check = await ctx.runQuery(internal.seedDemo.seedDemoCheck, {});
     if (check.isSeeded && check.version === SEED_DEMO_VERSION) {
       console.log(`Demo data already seeded (v${SEED_DEMO_VERSION}). Skipping.`);
@@ -2988,13 +2994,5 @@ export const mega = internalAction({
     await ctx.runMutation(internal.seedDemo.seedDemoVersion, {});
 
     console.log("✅ Demo data seeded successfully (v3.0)!");
-  },
-});
-
-export const seedMega = action({
-  args: {},
-  handler: async (ctx) => {
-    await ctx.runAction(internal.seedDemo.mega, {});
-    return { success: true, message: "Demo data seeded" };
   },
 });

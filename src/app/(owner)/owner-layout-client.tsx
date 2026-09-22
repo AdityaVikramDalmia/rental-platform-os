@@ -38,7 +38,7 @@ export function OwnerLayoutClient({
     }
 
     if (!currentUser) {
-      router.replace("/admin/login");
+      router.replace("/owner/login");
       return;
     }
 
@@ -53,7 +53,7 @@ export function OwnerLayoutClient({
         return;
       }
 
-      router.replace("/homepage");
+      router.replace("/owner/login?error=role_mismatch");
     }
   }, [currentUser, hasBackofficePersona, hasGuardPersona, hasOwnerPersona, isLoading, router]);
 

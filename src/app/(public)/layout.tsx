@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { withAuth, getSignInUrl } from "@workos-inc/authkit-nextjs";
+import { withAuth } from "@workos-inc/authkit-nextjs";
 import { ConvexClientProvider } from "@/components/shared/ConvexClientProvider";
 import { PublicHeader } from "@/components/public/header";
 import { PublicFooter } from "@/components/public/footer";
@@ -25,7 +25,8 @@ export const dynamic = "force-dynamic";
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const auth = await withAuth();
   const { accessToken, ...initialAuth } = auth;
-  const signInUrl = auth.user ? null : await getSignInUrl();
+  void accessToken;
+  const signInUrl = auth.user ? null : "/tenant/login";
 
   return (
     <ConvexClientProvider initialAuth={initialAuth}>

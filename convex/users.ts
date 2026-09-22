@@ -33,19 +33,8 @@ export const getCurrentUser = query({
       return null;
     }
 
-    if (user.user_type === "GUARD") {
-      const guardProfile = await ctx.db
-        .query("guard_profiles")
-        .withIndex("by_user_id", (q) => q.eq("user_id", user._id))
-        .unique();
-
-      return {
-        ...user,
-        guard_profile: guardProfile ?? null,
-      };
-    }
-
-    // Enrich admin users with role names for dashboard display
+    // Keep role names present for every user because a multi-persona field worker
+    // can have a GUARD primary type plus permission-filtered OPS access.
     const assignments = await ctx.db
       .query("user_role_assignments")
       .withIndex("by_user_id", (q) => q.eq("user_id", user._id))
@@ -60,6 +49,19 @@ export const getCurrentUser = query({
       if (role && !role.is_deleted) {
         roleNames.push(role.name);
       }
+    }
+
+    if (user.user_type === "GUARD") {
+      const guardProfile = await ctx.db
+        .query("guard_profiles")
+        .withIndex("by_user_id", (q) => q.eq("user_id", user._id))
+        .unique();
+
+      return {
+        ...user,
+        guard_profile: guardProfile ?? null,
+        role_names: roleNames,
+      };
     }
 
     return {
@@ -78,8 +80,10 @@ export const isMultiPersonaEnabled = query({
 });
 
 export const resolvePostAuthDestination = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    intended_persona: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
 
     if (!user || user.status !== "ACTIVE") {
@@ -95,6 +99,55 @@ export const resolvePostAuthDestination = query({
       SYSTEM_CONFIG_KEYS.MULTI_PERSONA_ENABLED,
       false,
     );
+
+    if (args.intended_persona !== undefined) {
+      if (!isUserType(args.intended_persona)) {
+        return {
+          pathname: "/admin/login?error=role_mismatch",
+          resolved_user_type: "UNKNOWN",
+          reason: "Invalid portal intent",
+          intent_allowed: false,
+          should_activate_intent: false,
+        };
+      }
+
+      const intendedPersona = args.intended_persona;
+      const availablePersonas = user.user_types ?? [user.user_type];
+      const resolvedIntentPersona =
+        intendedPersona === USER_TYPE.ADMIN &&
+        !availablePersonas.includes(USER_TYPE.ADMIN) &&
+        availablePersonas.includes(USER_TYPE.OPS)
+          ? USER_TYPE.OPS
+          : intendedPersona;
+
+      if (!availablePersonas.includes(resolvedIntentPersona)) {
+        const loginPathname = {
+          [USER_TYPE.ADMIN]: "/admin/login",
+          [USER_TYPE.OPS]: "/ops/login",
+          [USER_TYPE.GUARD]: "/guard/login",
+          [USER_TYPE.TENANT]: "/tenant/login",
+          [USER_TYPE.OWNER]: "/owner/login",
+        }[intendedPersona];
+
+        return {
+          pathname: `${loginPathname}?error=role_mismatch`,
+          resolved_user_type: user.user_type,
+          reason: "Account does not have the requested persona",
+          intent_allowed: false,
+          should_activate_intent: false,
+        };
+      }
+
+      return {
+        pathname: PERSONA_PORTAL_PATHNAME[intendedPersona],
+        resolved_user_type: resolvedIntentPersona,
+        reason: "Resolved by explicit portal intent",
+        intent_allowed: true,
+        persona_to_activate: resolvedIntentPersona,
+        should_activate_intent:
+          multiPersonaEnabled && user.active_persona !== resolvedIntentPersona,
+      };
+    }
 
     // When flag is OFF, route purely by user_type (pre-P45 behavior)
     const resolvedPersonaValue = multiPersonaEnabled

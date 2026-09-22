@@ -72,18 +72,24 @@ Seed demo data with `npm run seed`.
 
 ## Environment variables
 
-| Variable                          | Required  | Notes                                                                                                     |
-| --------------------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| `WORKOS_CLIENT_ID`                | yes       | From [WorkOS dashboard](https://dashboard.workos.com)                                                     |
-| `WORKOS_API_KEY`                  | yes       | WorkOS secret key                                                                                         |
-| `WORKOS_COOKIE_PASSWORD`          | yes       | Generate with `openssl rand -hex 32`                                                                      |
-| `NEXT_PUBLIC_WORKOS_REDIRECT_URI` | yes       | OAuth callback (default `http://localhost:3000/callback`)                                                 |
-| `LOCAL_AUTH`                      | optional  | Set to `true` only for `NODE_ENV=development`; use `LOCAL_AUTH=true npm run dev`, never commit it enabled |
-| `CONVEX_DEPLOYMENT`               | yes       | `anonymous:anonymous-rental-platform-os-1` for local dev                                                  |
-| `NEXT_PUBLIC_CONVEX_URL`          | yes       | Convex HTTP URL (default `http://127.0.0.1:3210`)                                                         |
-| `NEXT_PUBLIC_CONVEX_SITE_URL`     | yes       | Convex HTTP-site URL (default `http://127.0.0.1:3211`)                                                    |
-| `INTERNAL_API_SECRET`             | prod only | Shared secret for Next.js → Convex HTTP endpoint auth; generate with `openssl rand -hex 32`               |
-| `OPENAI_API_KEY`                  | optional  | Required only if you enable voice transcription                                                           |
+| Variable                          | Required  | Notes                                                                                                              |
+| --------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| `WORKOS_CLIENT_ID`                | yes       | From [WorkOS dashboard](https://dashboard.workos.com)                                                              |
+| `WORKOS_API_KEY`                  | yes       | WorkOS secret key                                                                                                  |
+| `WORKOS_COOKIE_PASSWORD`          | yes       | Generate with `openssl rand -hex 32`                                                                               |
+| `NEXT_PUBLIC_WORKOS_REDIRECT_URI` | yes       | OAuth callback (default `http://localhost:3000/callback`)                                                          |
+| `LOCAL_AUTH`                      | optional  | Set to `true` only for `NODE_ENV=development`; use `LOCAL_AUTH=true npm run dev`, never commit it enabled          |
+| `CONVEX_DEPLOYMENT`               | yes       | `anonymous:anonymous-rental-platform-os-1` for local dev                                                           |
+| `NEXT_PUBLIC_CONVEX_URL`          | yes       | Convex HTTP URL (default `http://127.0.0.1:3210`)                                                                  |
+| `NEXT_PUBLIC_CONVEX_SITE_URL`     | yes       | Convex HTTP-site URL (default `http://127.0.0.1:3211`)                                                             |
+| `INTERNAL_API_SECRET`             | prod only | Shared secret for Next.js → Convex HTTP endpoint auth; generate with `openssl rand -hex 32`                        |
+| `OPENAI_API_KEY`                  | optional  | Required only if you enable voice transcription                                                                    |
+| `DEMO_SEEDING_ENABLED`            | optional  | Convex runtime only. Set to `true` only on an isolated demo deployment before invoking internal demo seed commands |
+| `DEMO_ADMIN_PASSWORD`             | demo only | Required to create a missing Admin fixture; no fallback is used and existing accounts are not changed              |
+| `DEMO_GUARD_PASSWORD`             | demo only | Required to create a missing Guard fixture; no fallback is used and existing accounts are not changed              |
+| `DEMO_OPS_PASSWORD`               | demo only | Required to create a missing OPS fixture; no fallback is used and existing accounts are not changed                |
+| `DEMO_TENANT_PASSWORD`            | demo only | Required to create a missing Tenant fixture; no fallback is used and existing accounts are not changed             |
+| `DEMO_OWNER_PASSWORD`             | demo only | Required to create a missing Owner fixture; no fallback is used and existing accounts are not changed              |
 
 See `.env.example` for the complete template.
 

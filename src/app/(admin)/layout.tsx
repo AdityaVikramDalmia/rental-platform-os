@@ -52,7 +52,11 @@ export default async function AdminLayout({
     isBackofficeUser(currentUser.user_type);
 
   if (!hasBackofficePersona) {
-    redirect("/admin/login");
+    redirect("/admin/login?error=role_mismatch");
+  }
+
+  if (!currentUser.role_names?.length) {
+    redirect("/admin/login?error=access_not_configured");
   }
 
   return (

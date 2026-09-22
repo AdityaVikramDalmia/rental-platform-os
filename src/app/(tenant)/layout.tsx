@@ -31,13 +31,13 @@ export default async function TenantLayout({
   const { accessToken, ...initialAuth } = auth;
 
   if (!accessToken) {
-    redirect("/post-auth");
+    redirect("/tenant/login");
   }
 
   const currentUser = await fetchQuery(api.users.getCurrentUser, {}, { token: accessToken });
 
   if (!currentUser) {
-    redirect("/post-auth");
+    redirect("/tenant/login");
   }
 
   const hasTenantPersona =
@@ -45,7 +45,7 @@ export default async function TenantLayout({
     currentUser.user_type === USER_TYPE.TENANT;
 
   if (!hasTenantPersona) {
-    redirect("/post-auth");
+    redirect("/tenant/login?error=role_mismatch");
   }
 
   return (

@@ -849,6 +849,7 @@ Expiry path: ACTIVE / TERMS_PROPOSED → EXPIRED.
 | `TERMS_PROPOSED`            | `FAILED`                    | Negotiation breaks down                      | Admin  |
 | `TERMS_PROPOSED`            | `EXPIRED`                   | No activity within configured stale window   | System |
 | `COUNTER_PROPOSED`          | `TERMS_PROPOSED`            | Ops issues revised proposal (cyclic loop)    | Admin  |
+| `COUNTER_PROPOSED`          | `TERMS_AGREED`              | Both parties sign the current revision       | Admin  |
 | `COUNTER_PROPOSED`          | `FAILED`                    | Negotiation breaks down                      | Admin  |
 | `TERMS_AGREED`              | `TOKEN_COLLECTED`           | Token advance recorded                       | Admin  |
 | `TERMS_AGREED`              | `TERMS_PROPOSED`            | Agreement withdrawn; proposal reopened       | Admin  |

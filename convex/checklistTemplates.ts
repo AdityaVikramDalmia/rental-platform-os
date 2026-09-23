@@ -1,9 +1,9 @@
 import { v } from "convex/values";
-import { CHECKLIST_DEPTH } from "../lib/constants";
+import { CHECKLIST_DEPTH, USER_TYPE } from "../lib/constants";
 import type { ChecklistTemplatePayload } from "../lib/checklists/property-inspection-templates";
-import { requireBackoffice } from "./auth.helpers";
-import type { Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
+import { requireAuth, requireBackoffice, requireGuard } from "./auth.helpers";
+import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { internalMutation, query } from "./functions";
 
 const checklistDepthValidator = v.union(
@@ -103,10 +103,40 @@ export const getByDepth = query({
   },
 });
 
+function hasBackofficePersona(user: Doc<"users">): boolean {
+  const personas = user.user_types ?? [user.user_type];
+  return personas.includes(USER_TYPE.ADMIN) || personas.includes(USER_TYPE.OPS);
+}
+
+/** An active guard may read a template only through a live checklist assigned to them. */
+async function requireGuardWithAssignedTemplate(
+  ctx: QueryCtx,
+  templateId: Id<"checklist_templates">,
+): Promise<void> {
+  const guard = await requireGuard(ctx);
+  const assignedInstance = await ctx.db
+    .query("checklist_instances")
+    .withIndex("by_assigned_to", (q) => q.eq("assigned_to", guard._id))
+    .filter((q) =>
+      q.and(q.eq(q.field("template_id"), templateId), q.neq(q.field("is_deleted"), true)),
+    )
+    .first();
+
+  if (!assignedInstance) {
+    throw new Error("You can only access templates for checklists assigned to you");
+  }
+}
+
 export const getById = query({
   args: { id: v.id("checklist_templates") },
   handler: async (ctx, args) => {
-    await requireBackoffice(ctx);
+    const user = await requireAuth(ctx);
+
+    if (hasBackofficePersona(user)) {
+      await requireBackoffice(ctx);
+    } else {
+      await requireGuardWithAssignedTemplate(ctx, args.id);
+    }
 
     const template = await ctx.db.get(args.id);
     if (!template || template.is_deleted) return null;

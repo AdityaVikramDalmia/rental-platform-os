@@ -6,28 +6,30 @@ import {
   PERMISSIONS,
   CHAT_SENDER_ROLE,
   SYSTEM_CONFIG_KEYS,
-  type UserType,
   USER_TYPE,
 } from "../lib/constants";
 import { validateMessageTransition } from "../lib/chat";
 import { requireAuth, requirePermission } from "./auth.helpers";
+import type { Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import { requireChatParticipant } from "./chatChannels";
+import { type ChatAccess, requireChatParticipant } from "./chatChannels";
 import { internalMutation, internalQuery, mutation, query } from "./functions";
 import { rateLimiter } from "./rateLimiter";
 
+/**
+ * sender_role comes from how the caller reached the channel. A user who is both tenant and
+ * owner of the inquiry holds both labels truthfully; active_persona only picks between them.
+ */
 function resolveSenderRole(
-  userType: string,
+  access: ChatAccess,
+  user: Doc<"users">,
 ): (typeof CHAT_SENDER_ROLE)[keyof typeof CHAT_SENDER_ROLE] {
-  if (userType === USER_TYPE.TENANT) {
-    return CHAT_SENDER_ROLE.TENANT;
+  if (access.kind === "PARTY") {
+    const activePersona = user.active_persona ?? user.user_type;
+    return access.partyRoles.find((role) => role === activePersona) ?? access.partyRoles[0];
   }
 
-  if (userType === USER_TYPE.OWNER) {
-    return CHAT_SENDER_ROLE.OWNER;
-  }
-
-  if (userType === USER_TYPE.OPS) {
+  if (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS) {
     return CHAT_SENDER_ROLE.OPS;
   }
 
@@ -61,20 +63,8 @@ export const send = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-
-    if (
-      (user.user_types?.includes(USER_TYPE.ADMIN) ?? user.user_type === USER_TYPE.ADMIN) ||
-      (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS)
-    ) {
-      await requirePermission(ctx, PERMISSIONS.CHAT_SEND);
-    }
-
-    await requireChatParticipant(ctx, args.channel_id, user);
-
-    const channel = await ctx.db.get(args.channel_id);
-    if (!channel) {
-      throw new Error("Chat channel not found");
-    }
+    const access = await requireChatParticipant(ctx, args.channel_id, user, PERMISSIONS.CHAT_SEND);
+    const channel = access.channel;
 
     if (channel.status !== CHAT_CHANNEL_STATUS.ACTIVE) {
       throw new Error("Cannot send messages to an archived channel");
@@ -96,7 +86,7 @@ export const send = mutation({
       throw new Error(`Message exceeds max length of ${maxLen} characters`);
     }
 
-    const sender_role = resolveSenderRole((user.active_persona ?? user.user_type) as UserType);
+    const sender_role = resolveSenderRole(access, user);
 
     await rateLimiter.limit(ctx, "chat:send_message", {
       key: user._id,
@@ -117,7 +107,7 @@ export const send = mutation({
       created_at: Date.now(),
     });
 
-    if (user.user_types?.includes(USER_TYPE.TENANT) ?? user.user_type === USER_TYPE.TENANT) {
+    if (sender_role === CHAT_SENDER_ROLE.TENANT) {
       await ctx.db.insert("audit_logs", {
         actor_user_id: user._id,
         actor_type: "TENANT",
@@ -131,7 +121,7 @@ export const send = mutation({
           messageId: String(messageId),
         },
       });
-    } else if (user.user_types?.includes(USER_TYPE.OWNER) ?? user.user_type === USER_TYPE.OWNER) {
+    } else if (sender_role === CHAT_SENDER_ROLE.OWNER) {
       await ctx.db.insert("audit_logs", {
         actor_user_id: user._id,
         actor_type: "OWNER",
@@ -324,15 +314,8 @@ export const listByChannel = query({
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-    const isBackofficeViewer =
-      (user.user_types?.includes(USER_TYPE.ADMIN) ?? user.user_type === USER_TYPE.ADMIN) ||
-      (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS);
-
-    if (isBackofficeViewer) {
-      await requirePermission(ctx, PERMISSIONS.CHAT_VIEW);
-    }
-
-    await requireChatParticipant(ctx, args.channel_id, user);
+    const access = await requireChatParticipant(ctx, args.channel_id, user, PERMISSIONS.CHAT_VIEW);
+    const isBackofficeViewer = access.kind === "BACKOFFICE";
 
     const results = isBackofficeViewer
       ? await ctx.db
@@ -374,19 +357,12 @@ export const getById = query({
     const user = await requireAuth(ctx);
     const userId = user._id.toString();
 
-    if (
-      (user.user_types?.includes(USER_TYPE.ADMIN) ?? user.user_type === USER_TYPE.ADMIN) ||
-      (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS)
-    ) {
-      await requirePermission(ctx, PERMISSIONS.CHAT_VIEW);
-    }
-
     const message = await ctx.db.get(args.id);
     if (!message) {
       return null;
     }
 
-    await requireChatParticipant(ctx, message.channel_id, user);
+    await requireChatParticipant(ctx, message.channel_id, user, PERMISSIONS.CHAT_VIEW);
 
     if (message.sender_user_id.toString() !== userId) {
       return sanitizeMessageForViewer(message);

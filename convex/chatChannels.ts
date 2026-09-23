@@ -162,94 +162,143 @@ function isNegotiationRoomChannelType(channelType: string | undefined): boolean 
   );
 }
 
-function isRoomVisibleToUser(channelType: string | undefined, userType: UserType): boolean {
+/** A caller's party role in one inquiry's deal room, derived from the inquiry records. */
+export type ChatPartyRole = typeof USER_TYPE.TENANT | typeof USER_TYPE.OWNER;
+
+/**
+ * How the caller reaches a channel. PARTY: tenant/owner of the channel's inquiry (a user who
+ * is both holds both roles). BACKOFFICE: an active ADMIN/OPS user holding the permission the
+ * calling function names.
+ */
+export type ChatAccess =
+  | { kind: "PARTY"; channel: Doc<"chat_channels">; partyRoles: ChatPartyRole[] }
+  | { kind: "BACKOFFICE"; channel: Doc<"chat_channels"> };
+
+function hasPersona(user: Doc<"users">, type: UserType): boolean {
+  return user.user_types?.includes(type) ?? user.user_type === type;
+}
+
+export function hasBackofficePersona(user: Doc<"users">): boolean {
+  return hasPersona(user, USER_TYPE.ADMIN) || hasPersona(user, USER_TYPE.OPS);
+}
+
+function isRoomVisibleToPartyRole(channelType: string | undefined, role: ChatPartyRole): boolean {
   if (!isNegotiationRoomChannelType(channelType)) {
     return true;
   }
 
-  if (userType === USER_TYPE.ADMIN || userType === USER_TYPE.OPS) {
-    return true;
-  }
-
-  if (userType === USER_TYPE.TENANT) {
+  if (role === USER_TYPE.TENANT) {
     return (
       channelType === NEGOTIATION_ROOM_TYPE.OPS_TENANT ||
       channelType === NEGOTIATION_ROOM_TYPE.COMBINED
     );
   }
 
-  if (userType === USER_TYPE.OWNER) {
-    return (
-      channelType === NEGOTIATION_ROOM_TYPE.OPS_OWNER ||
-      channelType === NEGOTIATION_ROOM_TYPE.COMBINED
-    );
+  return (
+    channelType === NEGOTIATION_ROOM_TYPE.OPS_OWNER ||
+    channelType === NEGOTIATION_ROOM_TYPE.COMBINED
+  );
+}
+
+/**
+ * A room is visible only if every party role the caller holds may see it. A user who is both
+ * the tenant and the listing owner of one inquiry therefore gets the shared rooms only: each
+ * ops-private room exists to be hidden from the other side, and fail-closed is the safe reading.
+ */
+export function isRoomVisibleToParty(
+  channelType: string | undefined,
+  partyRoles: readonly ChatPartyRole[],
+): boolean {
+  return (
+    partyRoles.length > 0 && partyRoles.every((role) => isRoomVisibleToPartyRole(channelType, role))
+  );
+}
+
+/** Party roles come from the inquiry and listing records; active_persona is never consulted. */
+export async function resolveInquiryPartyRoles(
+  ctx: ChatParticipantCtx,
+  inquiry: Doc<"tenant_inquiries">,
+  user: Doc<"users">,
+): Promise<ChatPartyRole[]> {
+  const roles: ChatPartyRole[] = [];
+
+  if (hasPersona(user, USER_TYPE.TENANT) && inquiry.tenant_id?.toString() === user._id.toString()) {
+    roles.push(USER_TYPE.TENANT);
+  }
+
+  if (hasPersona(user, USER_TYPE.OWNER)) {
+    const listing = await ctx.db.get(inquiry.listing_id);
+    const owner = listing?.owner_id ? await ctx.db.get(listing.owner_id) : null;
+    if (owner?.user_id?.toString() === user._id.toString()) {
+      roles.push(USER_TYPE.OWNER);
+    }
+  }
+
+  return roles;
+}
+
+async function hasActiveBackofficePermission(
+  ctx: ChatParticipantCtx,
+  user: Doc<"users">,
+  permission: string,
+): Promise<boolean> {
+  if (!hasBackofficePersona(user) || user.status !== "ACTIVE") {
+    return false;
+  }
+
+  const assignments = await ctx.db
+    .query("user_role_assignments")
+    .withIndex("by_user_id", (q) => q.eq("user_id", user._id))
+    .filter((q) => q.neq(q.field("is_deleted"), true))
+    .collect();
+
+  for (const assignment of assignments) {
+    const role = await ctx.db.get(assignment.role_id);
+    if (role && !role.is_deleted && role.permissions.includes(permission)) {
+      return true;
+    }
   }
 
   return false;
 }
 
-function getActivePersona(user: Doc<"users">): UserType {
-  return (user.active_persona ?? user.user_type) as UserType;
-}
-
+/**
+ * Party access to a visible room comes first; otherwise backoffice access needs
+ * `backofficePermission` (chat.view for reads, chat.send for posting, etc.).
+ * Throws on no access; backoffice callers get the specific missing-permission error.
+ */
 export async function requireChatParticipant(
   ctx: ChatParticipantCtx,
   channelId: Id<"chat_channels">,
   user: Doc<"users">,
-): Promise<void> {
+  backofficePermission: string = PERMISSIONS.CHAT_VIEW,
+): Promise<ChatAccess> {
   const channel = await ctx.db.get(channelId);
   if (!channel) {
     throw new Error("Channel not found");
   }
 
-  if (
-    (user.user_types?.includes(USER_TYPE.ADMIN) ?? user.user_type === USER_TYPE.ADMIN) ||
-    (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS)
-  ) {
-    return;
-  }
-
   const inquiry = await ctx.db.get(channel.inquiry_id);
-  if (!inquiry) {
-    throw new Error("Inquiry not found");
+  const partyRoles = inquiry ? await resolveInquiryPartyRoles(ctx, inquiry, user) : [];
+
+  if (isRoomVisibleToParty(channel.channel_type, partyRoles)) {
+    return { kind: "PARTY", channel, partyRoles };
   }
 
-  if (user.user_types?.includes(USER_TYPE.TENANT) ?? user.user_type === USER_TYPE.TENANT) {
-    if (inquiry.tenant_id?.toString() !== user._id.toString()) {
-      throw new Error("Not authorized for this channel");
-    }
-    if (
-      !isRoomVisibleToUser(
-        channel.channel_type,
-        (user.active_persona ?? user.user_type) as UserType,
-      )
-    ) {
-      throw new Error("Access denied");
-    }
-    return;
+  if (await hasActiveBackofficePermission(ctx, user, backofficePermission)) {
+    return { kind: "BACKOFFICE", channel };
   }
 
-  if (user.user_types?.includes(USER_TYPE.OWNER) ?? user.user_type === USER_TYPE.OWNER) {
-    const listing = await ctx.db.get(inquiry.listing_id);
-    if (!listing || !listing.owner_id) {
-      throw new Error("Not authorized for this channel");
-    }
-    const owner = await ctx.db.get(listing.owner_id);
-    if (!owner || !owner.user_id || owner.user_id.toString() !== user._id.toString()) {
-      throw new Error("Not authorized for this channel");
-    }
-    if (
-      !isRoomVisibleToUser(
-        channel.channel_type,
-        (user.active_persona ?? user.user_type) as UserType,
-      )
-    ) {
-      throw new Error("Access denied");
-    }
-    return;
+  if (hasBackofficePersona(user)) {
+    // Same messages as requirePermission, which this helper cannot call without ctx.auth.
+    throw new Error(
+      user.status !== "ACTIVE"
+        ? "Account not active"
+        : `Missing permission: ${backofficePermission}`,
+    );
   }
 
-  throw new Error("Not authorized for this channel");
+  throw new Error(partyRoles.length > 0 ? "Access denied" : "Not authorized for this channel");
 }
 
 export const create = mutation({
@@ -364,38 +413,33 @@ export const getByInquiryId = query({
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
 
-    if (
-      (user.user_types?.includes(USER_TYPE.ADMIN) ?? user.user_type === USER_TYPE.ADMIN) ||
-      (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS)
-    ) {
-      await requirePermission(ctx, PERMISSIONS.CHAT_VIEW);
-    }
-
     const allChannels = await ctx.db
       .query("chat_channels")
       .withIndex("by_inquiry_id", (q) => q.eq("inquiry_id", args.inquiry_id))
       .collect();
 
-    const channels = allChannels.filter((channel) =>
-      isRoomVisibleToUser(
-        channel.channel_type,
-        (user.active_persona ?? user.user_type) as UserType,
-      ),
-    );
-
-    if (channels.length === 0) {
+    if (allChannels.length === 0) {
+      if (hasBackofficePersona(user)) {
+        await requirePermission(ctx, PERMISSIONS.CHAT_VIEW);
+      }
       return null;
     }
 
-    const activeChannels = channels.filter(
-      (channel) => channel.status === CHAT_CHANNEL_STATUS.ACTIVE,
+    const inquiry = await ctx.db.get(args.inquiry_id);
+    const partyRoles = inquiry ? await resolveInquiryPartyRoles(ctx, inquiry, user) : [];
+    const partyChannels = allChannels.filter((channel) =>
+      isRoomVisibleToParty(channel.channel_type, partyRoles),
     );
-    const candidateChannels = activeChannels.length > 0 ? activeChannels : channels;
-    const selectedChannel = [...candidateChannels].sort(
-      (a, b) => (b.created_at ?? b._creationTime) - (a.created_at ?? a._creationTime),
-    )[0];
+    const canMonitorAll =
+      partyChannels.length < allChannels.length &&
+      (await hasActiveBackofficePermission(ctx, user, PERMISSIONS.CHAT_VIEW));
 
-    await requireChatParticipant(ctx, selectedChannel._id, user);
+    const selectedChannel = getPreferredChannel(canMonitorAll ? allChannels : partyChannels);
+    if (!selectedChannel) {
+      // Nothing on this inquiry is open to the caller: raise the specific reason.
+      await requireChatParticipant(ctx, allChannels[0]._id, user, PERMISSIONS.CHAT_VIEW);
+      return null;
+    }
 
     return selectedChannel;
   },
@@ -407,16 +451,8 @@ export const getById = query({
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-
-    if (
-      (user.user_types?.includes(USER_TYPE.ADMIN) ?? user.user_type === USER_TYPE.ADMIN) ||
-      (user.user_types?.includes(USER_TYPE.OPS) ?? user.user_type === USER_TYPE.OPS)
-    ) {
-      await requirePermission(ctx, PERMISSIONS.CHAT_VIEW);
-    }
-
-    await requireChatParticipant(ctx, args.id, user);
-    return await ctx.db.get(args.id);
+    const access = await requireChatParticipant(ctx, args.id, user, PERMISSIONS.CHAT_VIEW);
+    return access.channel;
   },
 });
 
@@ -475,7 +511,9 @@ async function getParticipantChannelsForUser(
 ): Promise<ParticipantChannelRecord[]> {
   const records: ParticipantChannelRecord[] = [];
   const seenChannelIds = new Set<string>();
-  const activePersona = getActivePersona(user);
+  // active_persona only picks which portal list to build. Each room's visibility comes from the
+  // caller's party roles on that inquiry, or from backoffice access (chat.view, checked by caller).
+  const activePersona = (user.active_persona ?? user.user_type) as UserType;
 
   const pushRecord = (record: ParticipantChannelRecord) => {
     const channelId = String(record.channel._id);
@@ -498,7 +536,13 @@ async function getParticipantChannelsForUser(
     activePersona === USER_TYPE.OPS;
 
   const shouldTraverseAllChannels =
-    activePersona === USER_TYPE.ADMIN || activePersona === USER_TYPE.OPS;
+    (activePersona === USER_TYPE.ADMIN || activePersona === USER_TYPE.OPS) &&
+    hasBackofficePersona(user);
+
+  const isVisibleInList = (
+    channel: Doc<"chat_channels">,
+    partyRoles: readonly ChatPartyRole[],
+  ): boolean => shouldTraverseAllChannels || isRoomVisibleToParty(channel.channel_type, partyRoles);
 
   if (activePersona === USER_TYPE.GUARD) {
     return records;
@@ -528,9 +572,12 @@ async function getParticipantChannelsForUser(
             .query("chat_channels")
             .withIndex("by_inquiry_id", (q) => q.eq("inquiry_id", inquiry._id))
             .collect();
+          const partyRoles = shouldTraverseAllChannels
+            ? []
+            : await resolveInquiryPartyRoles(ctx, inquiry, user);
 
           for (const channel of channels) {
-            if (!isRoomVisibleToUser(channel.channel_type, activePersona)) {
+            if (!isVisibleInList(channel, partyRoles)) {
               continue;
             }
 
@@ -556,9 +603,12 @@ async function getParticipantChannelsForUser(
         .query("chat_channels")
         .withIndex("by_inquiry_id", (q) => q.eq("inquiry_id", inquiry._id))
         .collect();
+      const partyRoles = shouldTraverseAllChannels
+        ? []
+        : await resolveInquiryPartyRoles(ctx, inquiry, user);
 
       for (const channel of channels) {
-        if (!isRoomVisibleToUser(channel.channel_type, activePersona)) {
+        if (!isVisibleInList(channel, partyRoles)) {
           continue;
         }
 
@@ -583,10 +633,6 @@ async function getParticipantChannelsForUser(
     : await ctx.db.query("chat_channels").collect();
 
   for (const channel of channels) {
-    if (!isRoomVisibleToUser(channel.channel_type, activePersona)) {
-      continue;
-    }
-
     const inquiry = await ctx.db.get(channel.inquiry_id);
     if (!inquiry) {
       continue;
@@ -779,8 +825,9 @@ export const getByInquiryForTenant = query({
       .withIndex("by_inquiry_id", (q) => q.eq("inquiry_id", args.inquiry_id))
       .collect();
 
+    const partyRoles = await resolveInquiryPartyRoles(ctx, inquiry, tenant);
     const tenantVisibleChannels = allChannels.filter((channel) =>
-      isRoomVisibleToUser(channel.channel_type, USER_TYPE.TENANT),
+      isRoomVisibleToParty(channel.channel_type, partyRoles),
     );
 
     const channel = getPreferredChannel(tenantVisibleChannels);
@@ -789,7 +836,7 @@ export const getByInquiryForTenant = query({
       return null;
     }
 
-    await requireChatParticipant(ctx, channel._id, tenant);
+    await requireChatParticipant(ctx, channel._id, tenant, PERMISSIONS.CHAT_VIEW);
     return channel;
   },
 });
@@ -801,7 +848,7 @@ export const trackTenantChatOpened = mutation({
   handler: async (ctx, args) => {
     const tenant = await requireTenant(ctx);
 
-    await requireChatParticipant(ctx, args.channel_id, tenant);
+    await requireChatParticipant(ctx, args.channel_id, tenant, PERMISSIONS.CHAT_VIEW);
 
     await ctx.db.insert("audit_logs", {
       actor_user_id: tenant._id,

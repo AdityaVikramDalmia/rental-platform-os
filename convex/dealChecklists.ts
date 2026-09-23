@@ -1,11 +1,11 @@
 import { anyApi } from "convex/server";
 import { v } from "convex/values";
 import { CHAT_CHANNEL_STATUS, TENANT_INQUIRY_STATUS } from "../lib/constants";
-import { requireAuth, requireBackoffice, requirePermission } from "./auth.helpers";
+import { requireAuth, requirePermission } from "./auth.helpers";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { requireChatParticipant } from "./chatChannels";
+import { hasBackofficePersona, requireChatParticipant } from "./chatChannels";
 import { internalMutation, internalQuery, mutation, query } from "./functions";
 import { rateLimiter } from "./rateLimiter";
 
@@ -170,17 +170,25 @@ function canTransitionChecklistStatus(from: string, to: string): boolean {
   return (transitions[from] ?? []).includes(to);
 }
 
+const PARTY_VISIBLE_CHECKLIST_STATUSES: ReadonlySet<string> = new Set([
+  "SHARED",
+  "IN_REVIEW",
+  "DISPUTED",
+  "APPROVED",
+]);
+
+/**
+ * Tenant/owner parties of the checklist's room read it as participants; anyone else reaches it
+ * only as backoffice holding deal_checklists.view (checked for every ADMIN/OPS persona, not only
+ * the legacy primary user_type).
+ */
 async function ensureChecklistReadAccess(
   ctx: QueryCtx,
   user: Doc<"users">,
   channelId: Id<"chat_channels">,
-): Promise<void> {
-  if (user.user_type === "ADMIN" || user.user_type === "OPS") {
-    await requirePermission(ctx, DEAL_CHECKLIST_VIEW_PERMISSION);
-    return;
-  }
-
-  await requireChatParticipant(ctx, channelId, user);
+): Promise<"PARTY" | "BACKOFFICE"> {
+  const access = await requireChatParticipant(ctx, channelId, user, DEAL_CHECKLIST_VIEW_PERMISSION);
+  return access.kind;
 }
 
 async function createDraftChecklist(
@@ -680,7 +688,6 @@ export const getByInquiry = query({
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-    const isBackofficeUser = user.user_type === "ADMIN" || user.user_type === "OPS";
 
     const checklist = await ctx.db
       .query("deal_checklists")
@@ -690,21 +697,13 @@ export const getByInquiry = query({
       .first();
 
     if (checklist) {
-      await ensureChecklistReadAccess(ctx, user, checklist.channel_id);
+      const access = await ensureChecklistReadAccess(ctx, user, checklist.channel_id);
 
-      if (!isBackofficeUser) {
-        const visibleStatuses = new Set(["SHARED", "IN_REVIEW", "DISPUTED", "APPROVED"]);
-        if (!visibleStatuses.has(checklist.status)) {
-          return null;
-        }
+      if (access !== "BACKOFFICE" && !PARTY_VISIBLE_CHECKLIST_STATUSES.has(checklist.status)) {
+        return null;
       }
 
       return checklist;
-    }
-
-    if (isBackofficeUser) {
-      await requirePermission(ctx, DEAL_CHECKLIST_VIEW_PERMISSION);
-      return null;
     }
 
     const inquiryChannel = await ctx.db
@@ -712,11 +711,12 @@ export const getByInquiry = query({
       .withIndex("by_inquiry_id", (q) => q.eq("inquiry_id", args.inquiry_id))
       .first();
 
-    if (!inquiryChannel) {
-      return null;
+    if (inquiryChannel) {
+      await ensureChecklistReadAccess(ctx, user, inquiryChannel._id);
+    } else if (hasBackofficePersona(user)) {
+      await requirePermission(ctx, DEAL_CHECKLIST_VIEW_PERMISSION);
     }
 
-    await ensureChecklistReadAccess(ctx, user, inquiryChannel._id);
     return null;
   },
 });
@@ -730,27 +730,16 @@ export const getById = query({
   },
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
-    let isBackofficeUser = false;
-
-    try {
-      await requireBackoffice(ctx);
-      isBackofficeUser = true;
-    } catch {
-      isBackofficeUser = false;
-    }
 
     const checklist = await ctx.db.get(args.checklist_id);
     if (!checklist) {
       return null;
     }
 
-    await ensureChecklistReadAccess(ctx, user, checklist.channel_id);
+    const access = await ensureChecklistReadAccess(ctx, user, checklist.channel_id);
 
-    if (!isBackofficeUser) {
-      const visibleStatuses = new Set(["SHARED", "IN_REVIEW", "DISPUTED", "APPROVED"]);
-      if (!visibleStatuses.has(checklist.status)) {
-        return null;
-      }
+    if (access !== "BACKOFFICE" && !PARTY_VISIBLE_CHECKLIST_STATUSES.has(checklist.status)) {
+      return null;
     }
 
     return checklist;

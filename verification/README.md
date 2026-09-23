@@ -27,7 +27,7 @@ Functional testing history for the Rental Platform OS platform. Tracks what's be
 | **NOT TESTED**   | No testing done yet                                 |
 | **NEEDS RETEST** | Code changed since last test — results may be stale |
 
-## For Agents
+## For Contributors
 
 **Before testing a feature:**
 
@@ -51,7 +51,7 @@ Functional testing history for the Rental Platform OS platform. Tracks what's be
 | **Status**      | TESTED / PARTIAL / NEEDS RETEST            |
 | **Last Tested** | YYYY-MM-DD                                 |
 | **Test Method** | Playwright + browser_snapshot + Convex CLI |
-| **Tested By**   | Agent session ID                           |
+| **Tested By**   | Person or tool that ran the checks         |
 
 ## Workflows Tested
 

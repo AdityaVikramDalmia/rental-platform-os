@@ -45,7 +45,7 @@ maintainer-only deployment command rather than reintroducing a public wrapper.
 
 Existing account passwords are preserved by the seed. Rotate the four approved fixture accounts and
 the new limited admin account individually in WorkOS. Generate a distinct value for each persona,
-record it in the operator's approved secret store, and never pass it as a command-line argument or
+record it in the maintainer's approved secret store, and never pass it as a command-line argument or
 commit it.
 
 Create the limited admin in WorkOS and Convex through the normal authenticated admin workflow. Assign
@@ -54,7 +54,7 @@ identity.
 
 ## 5. Publish links only after verification
 
-The portfolio can link directly to:
+A public demo page can link directly to:
 
 - `/admin/login`
 - `/ops/login`

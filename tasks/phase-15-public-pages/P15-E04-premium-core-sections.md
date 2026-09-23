@@ -379,7 +379,7 @@ Navigate to `http://localhost:3000/homepage`. Scroll to "How It Works." Verify:
 ### Out of Scope
 
 - The full 6-step process timeline (that's on the `/how-it-works` page, already built)
-- Guard journey visualization (removed from homepage per user direction)
+- Guard journey visualization (removed from homepage by design)
 - Interactive expand/collapse per step (homepage version is static — the how-it-works page has interactive steps)
 
 ---

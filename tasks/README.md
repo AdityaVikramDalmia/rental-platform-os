@@ -157,7 +157,7 @@ All 47 implementation phases. Phases 1-14 cover the guard pipeline. Phases 15-21
 
 ### Completed Outside Phase System
 
-The following work was completed outside the phase system (ad-hoc user requests):
+The following work was completed outside the phase system (ad-hoc requests):
 
 | Work Item | Status | When | Details |
 |-----------|--------|------|---------|

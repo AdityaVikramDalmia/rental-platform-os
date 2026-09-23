@@ -588,7 +588,7 @@ Guards see available tenant visit requests posted as bounties by ops. Guards can
 │                                 │
 │  ┌─────────────────────────┐   │
 │  │ 🏠 Tower B, Fl 3, #302  │   │
-│  │ Riverstone Splendora          │   │
+│  │ Riverstone Gardens            │   │
 │  │                          │   │
 │  │ Tenant wants: Feb 22,    │   │
 │  │ 2-4 PM                   │   │

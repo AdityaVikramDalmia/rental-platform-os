@@ -2,6 +2,7 @@
   "name": "rental-platform-os",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "concurrently --names backend,frontend --prefix-colors blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:force": "npm run kill-ports && npm run dev",

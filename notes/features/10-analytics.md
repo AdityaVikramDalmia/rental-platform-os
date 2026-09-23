@@ -73,7 +73,7 @@ Shows absolute numbers and drop-off percentages at each stage.
 | Society      | City   | Guards | Leads (30d) | Verified Rate | Closures | Avg Days to Closure |
 | ------------ | ------ | ------ | ----------- | ------------- | -------- | ------------------- |
 | Maplewood  | Mumbai | 12     | 45          | 62%           | 3        | 18                  |
-| Riverstone Palava | Mumbai | 8      | 28          | 55%           | 1        | 24                  |
+| Riverstone Heights | Mumbai | 8      | 28          | 55%           | 1        | 24                  |
 
 **Society Detail** (drill-down):
 

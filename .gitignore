@@ -79,6 +79,5 @@ credentials.json
 # build if `.omo/` is ever tracked, so keep it out of the index entirely.
 .omo/
 
-# internal deployment runbooks — live infra hostnames, registry, LB IP, prod
-# deployment ids and test-account identifiers. Kept on disk, never published.
+# local-only deployment notes (never committed)
 docs/deployment/

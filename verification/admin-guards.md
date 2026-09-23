@@ -4,8 +4,8 @@
 | --------------- | ----------------------------------------------------- |
 | **Status**      | TESTED                                                |
 | **Last Tested** | 2026-02-17                                            |
-| **Test Method** | Docker Playwright (browser-pool-1) + browser_snapshot |
-| **Tested By**   | Round 2: ses_393f87894ffeTG1QUwYLNtULIW               |
+| **Test Method** | Docker Playwright + browser_snapshot |
+| **Tested By**   | Coding agent (automated browser run) |
 
 ## Workflows Tested
 

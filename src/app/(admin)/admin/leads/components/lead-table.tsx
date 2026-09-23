@@ -474,7 +474,7 @@ export function LeadTable({
                             {hasFlags ? (
                               <QualityFlagBadge flags={lead.quality_flags ?? []} />
                             ) : (
-                              <span className="text-slate-300">\u2014</span>
+                              <span className="text-slate-300">{"\u2014"}</span>
                             )}
                           </td>
                           <td

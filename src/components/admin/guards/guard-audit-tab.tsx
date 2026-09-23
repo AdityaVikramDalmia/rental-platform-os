@@ -187,7 +187,7 @@ export function GuardAuditTab({ guardId }: GuardAuditTabProps) {
                                   {isExpanded ? "Hide" : "View"}
                                 </Button>
                               ) : (
-                                <span className="text-slate-400">\u2014</span>
+                                <span className="text-slate-400">{"\u2014"}</span>
                               )}
                             </td>
                           </tr>

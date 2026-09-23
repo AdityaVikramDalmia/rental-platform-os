@@ -173,7 +173,7 @@ function AssignmentRow({
             Check-in
           </Button>
         ) : (
-          <span className="text-xs text-slate-400">\u2014</span>
+          <span className="text-xs text-slate-400">{"\u2014"}</span>
         )}
       </td>
     </tr>
@@ -276,7 +276,7 @@ function UpcomingRow({
             Log Check-in
           </Button>
         ) : (
-          <span className="text-xs text-slate-400">\u2014</span>
+          <span className="text-xs text-slate-400">{"\u2014"}</span>
         )}
       </td>
     </tr>

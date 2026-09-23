@@ -143,7 +143,9 @@ export function TeamHealthHeatmap({ action }: TeamHealthHeatmapProps) {
                 <p>
                   Check-in:{" "}
                   <span className="font-semibold text-slate-900">
-                    {agent.days_since_last_check_in ?? "N/A"}d
+                    {agent.days_since_last_check_in == null
+                      ? "N/A"
+                      : `${agent.days_since_last_check_in}d`}
                   </span>
                 </p>
               </div>

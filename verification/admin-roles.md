@@ -5,7 +5,7 @@
 | **Status**      | TESTED                                     |
 | **Last Tested** | 2026-02-17                                 |
 | **Test Method** | Playwright + browser_snapshot + Convex CLI |
-| **Tested By**   | ses_3951a68cdffeDb1jcw6HRjnlzp             |
+| **Tested By**   | Coding agent (automated browser run) |
 
 ## Workflows Tested
 
@@ -19,7 +19,7 @@
 | W6  | Navigate to create role page                        | PASS   | `/admin/roles/new`                                                                     |
 | W7  | Create role form with fields                        | PASS   | Name, Description, Permissions editor                                                  |
 | W8  | Empty form validation                               | PASS   | Role name required, at least one permission                                            |
-| W9  | Select permissions                                  | PASS\* | Used `leads.view` and `leads.verify` (not `LEADS_MANAGE` — test prompt had wrong name) |
+| W9  | Select permissions                                  | PASS\* | Used `leads.view` and `leads.verify` (not `LEADS_MANAGE` — test plan had wrong name) |
 | W10 | Create role → toast + redirect                      | PASS   | "Role created", redirects to `/admin/roles`                                            |
 | W11 | New role in table with "Custom" badge               | PASS   |                                                                                        |
 | W12 | DB verify role created                              | PASS   | `name: "Test Reviewer"`, `is_deleted: false`                                           |

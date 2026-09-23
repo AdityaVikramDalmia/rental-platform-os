@@ -5,7 +5,7 @@
 | **Status**      | TESTED                              |
 | **Last Tested** | 2026-02-16                          |
 | **Test Method** | Playwright + browser_snapshot       |
-| **Tested By**   | Manual + Playwright in main session |
+| **Tested By**   | Manual + Playwright |
 
 ## Workflows Tested
 

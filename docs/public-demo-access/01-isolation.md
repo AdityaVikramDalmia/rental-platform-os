@@ -14,21 +14,13 @@ The guarded seed flow now has these properties:
 - a missing account can only be created when its persona-specific password environment variable is
   present; there is no password fallback.
 
-## Source revision warning
-
-The canonical checkout at `~/Documents/work/flatify/rental-platform-os` and its configured GitHub
-`origin/main` both resolved to `4c7b685` during this work. Separate deployment evidence identified an
-application revision `ee62418` and an image built from `8b439bb`. Reconcile those histories and choose
-the authoritative source before building or deploying these changes. Do not reset this checkout to a
-revision that is absent from its configured remote.
-
 ## What is shared
 
 The hosted environment is one shared Convex deployment and one WorkOS environment. Demo users see
 and modify the same fixture dataset. There is no per-visitor tenant, database copy, session reset, or
 automatic rollback. This is a shared staging demo, not a disposable sandbox per visitor.
 
-The current seed catalog contains more identities than the five portfolio personas. Some are used by
+The current seed catalog contains more identities than the five demo personas. Some are used by
 linked fixture records. Running the mega-seed can add or update shared demo data, so it must remain a
 maintainer-only operation.
 

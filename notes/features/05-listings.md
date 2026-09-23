@@ -94,7 +94,7 @@ Pre-populated from lead data where available. Admin fills in the rest.
 
 1. Admin fills form → "Save as Draft"
 2. Admin reviews → "Publish"
-3. System generates slug (URL-friendly: `tower-a-1201-hiranandani-2bhk`)
+3. System generates slug (URL-friendly: `tower-a-1201-lakeview-2bhk`)
 4. Public URL becomes active: `https://app.rental-platform-os.com/listing/{slug}`
 5. Admin can copy the URL and share via WhatsApp / SMS
 
@@ -268,7 +268,7 @@ function generateSlug(
   bhk_config: string,
 ): string {
   // "Tower A" + "1201" + "Maplewood" + "2BHK"
-  // → "tower-a-1201-hiranandani-2bhk"
+  // → "tower-a-1201-lakeview-2bhk"
   const base = [building_name, flat_number, society_name, bhk_config]
     .join("-")
     .toLowerCase()

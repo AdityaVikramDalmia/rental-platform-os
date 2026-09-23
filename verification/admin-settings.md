@@ -5,7 +5,7 @@
 | **Status**      | TESTED                                     |
 | **Last Tested** | 2026-02-17                                 |
 | **Test Method** | Playwright + browser_snapshot + Convex CLI |
-| **Tested By**   | ses_394f98e05ffeNHyfc2t19537Fa             |
+| **Tested By**   | Coding agent (automated browser run) |
 
 ## Workflows Tested
 

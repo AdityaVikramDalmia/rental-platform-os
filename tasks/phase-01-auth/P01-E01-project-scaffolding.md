@@ -295,7 +295,7 @@ npm run lint
 
 ### Deviations from Spec
 - **Permission count**: Doc references "39 permissions" in some places but actual count from `13-constants-reference.md` is **48**. `lib/constants.ts` has all 48.
-- **Convex local**: Running locally (not cloud) per user preference. URL is `http://127.0.0.1:3210`.
+- **Convex local**: Running locally (not cloud) by design. URL is `http://127.0.0.1:3210`.
 - **shadcn init**: Used `-d` (defaults) flag — style auto-detected as `new-york`. Manually set radius to `0.5rem`.
 
 ### Gotchas for Next Epic

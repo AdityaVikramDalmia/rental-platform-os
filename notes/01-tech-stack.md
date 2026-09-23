@@ -652,7 +652,7 @@ rental-platform-os/
 │   │   │   ├── contact/        # Contact hub (channels, form, office, FAQ, newsletter)
 │   │   │   └── owner-services/ # Owner services funnel (V1: contact form only)
 │   │   └── listing/            # Public listing pages (SSR, no auth)
-│   │       └── [slug]/         # /listing/tower-a-1201-hiranandani-2bhk
+│   │       └── [slug]/         # /listing/tower-a-1201-lakeview-2bhk
 │   ├── components/
 │   │   ├── ui/                 # shadcn/ui components
 │   │   ├── guard/              # Guard-specific components

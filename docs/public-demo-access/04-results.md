@@ -22,7 +22,7 @@ existing WorkOS passwords, explicit persona passwords for new accounts, and both
 
 ## Local browser checks
 
-Browser QA used Ego Browser TaskSpace 11, page `p2`, with:
+Browser QA ran against a local frontend started with:
 
 ```bash
 LOCAL_AUTH=true npm run dev:frontend
@@ -47,17 +47,10 @@ server exposed the generated authorize URL, but its local AuthKit authorization 
 full local auth backend. Callback intent and post-auth role resolution were therefore verified by the
 focused tests rather than claimed as an end-to-end browser login.
 
-After QA, the agent-created browser page `p2` was closed, leaving the shared portfolio page untouched.
-The frontend development server was stopped with `Ctrl-C`. The shared TaskSpace was later closed by
-the parent session.
+## External state
 
-## Repository and external-state status
-
-Immediately after `cad517f`, `git status --short --branch` reported a clean `main` branch ahead of
-`origin/main` by one commit. The commit remained local and unpushed during this work. No deployment,
-DNS change, Convex environment change, WorkOS account creation or password rotation, credential
-publication, or repository-visibility change was performed. Remote repository visibility was not
-modified or independently reverified.
+This verification changed no deployment, DNS record, Convex environment, WorkOS account, password,
+or published credential.
 
 Public demo credentials remain blocked on the isolation and provisioning work in
 [01-isolation.md](01-isolation.md) and [02-provisioning.md](02-provisioning.md).

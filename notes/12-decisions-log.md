@@ -104,7 +104,7 @@
 | 36  | All auth via WorkOS                 | **Tenants + Owners use Google Sign-In via WorkOS AuthKit** (same as admin flow). Guard phone+password unchanged.            | Single auth provider. No Supabase. Four auth methods: guard (phone+password), tenant (Google SSO), owner (Google SSO), admin (Google SSO).                                                                    |
 | 37  | Owner portal V1 scope               | **Contact form only** — owner fills out lead capture form. Plans/ROI/case studies = V2.                                     | V1 focuses on capturing owner interest. Full owner self-service is premature.                                                                                                                                 |
 | 38  | WhatsApp scope                      | **Manual deep links (`wa.me/...`) = V1. WhatsApp Business API / bot = V2.**                                                 | Deep links are zero-integration (just URLs). API bot requires vendor setup, templates, webhook sync.                                                                                                          |
-| 39  | CSV bulk import                     | **Stays V2** — manual listing creation only in V1.                                                                          | V1 scale (3 societies) doesn't justify bulk import tooling.                                                                                                                                                   |
+| 39  | CSV bulk import                     | **Stays V2** — manual listing creation only in V1.                                                                          | V1 scale (a small number of societies) doesn't justify bulk import tooling.                                                                                                                                                   |
 | 40  | Admin panel design approach         | **Hybrid: Rental Platform OS's separate-pages structure + external CRM card/filter UI patterns**                                    | Keep clean page separation for different concerns. Borrow the card-based, filter-heavy interaction patterns from the external code for component design. Two separate tabs: Guard Leads and Tenant Inquiries. |
 
 ---
@@ -161,10 +161,8 @@
 
 ## Scale Context
 
-- **3 societies**, ~15,000 total flats
-- **Brokerage firm using tech**, NOT a SaaS platform
+- Designed for a single operator running a small number of societies, not a multi-tenant SaaS platform
 - No need for: audit archival, aggressive pagination optimization, per-society RBAC scoping, complex caching
-- Max revenue target: ₹10 crore
 
 ---
 

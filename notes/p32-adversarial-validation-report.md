@@ -3,7 +3,6 @@
 **Date**: 2026-02-20
 **Scope**: Phase 32 (Incentive v3) — ~23,000 lines across 30+ files
 **Protocol**: 6 rounds of 6 adversarial Oracle reviews, fix dispatch rounds per Oracle round, re-validation
-**Duration**: ~5+ hours orchestrated
 
 ---
 
@@ -400,7 +399,7 @@ All 12 locked decisions verified unchanged:
 
 - **6 adversarial Oracles** covered: schema/data integrity, commission correctness, attribution/disbursement safety, gamification/cron safety, shadow mode/migration safety, permissions/audit/frontend
 - **2 fix rounds**: Round 1a (4 deep agents: commission, gamification, attribution, shadow), Round 1b (2 quick agents: schema indexes, frontend/permissions)
-- **1 session continuation**: Fix Agent D's initial rollout fix broke 2 tests (rollback from OFF/SHADOW threw instead of returning no-op). Fixed via `session_id` continuation.
+- **1 follow-up fix**: Fix Agent D's initial rollout fix broke 2 tests (rollback from OFF/SHADOW threw instead of returning no-op). A follow-up in the same round corrected it.
 - **2 re-validation Oracles**: Split by file domain for faster execution. Both completed in ~2 minutes each.
 
 ### Round 2

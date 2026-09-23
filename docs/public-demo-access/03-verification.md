@@ -1,6 +1,6 @@
 # Verification checklist
 
-Run these checks on the deployed demo revision before placing credentials on the portfolio.
+Run these checks on the deployed demo revision before publishing any demo credentials.
 
 ## Entry and role routing
 
@@ -40,5 +40,5 @@ npm run build
 ```
 
 Record the deployed application commit, GitOps commit, image digest, WorkOS environment, Convex
-deployment, and the date of the credential rotation in the private operator log. Do not put passwords
+deployment, and the date of the credential rotation in a private maintainer log. Do not put passwords
 or reset links in that log.

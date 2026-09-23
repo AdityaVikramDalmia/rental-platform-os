@@ -5,7 +5,7 @@
 | **Status**      | TESTED                         |
 | **Last Tested** | 2026-02-17                     |
 | **Test Method** | Playwright + browser_snapshot  |
-| **Tested By**   | ses_3951e9516ffeIdvwjhieok1Xwq |
+| **Tested By**   | Coding agent (automated browser run) |
 
 ## Workflows Tested
 

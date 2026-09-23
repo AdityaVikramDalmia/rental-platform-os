@@ -5,7 +5,7 @@
 | **Status**      | TESTED                               |
 | **Last Tested** | 2026-02-20                           |
 | **Test Method** | Contract checklist + automated tests |
-| **Tested By**   | OpenCode (gpt-5.3-codex)             |
+| **Tested By**   | Coding agent                         |
 
 ## Epic Checklist (E01-E09)
 

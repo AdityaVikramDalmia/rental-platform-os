@@ -786,6 +786,12 @@ export const signTerms = mutation({
       throw new Error("Proposal is not shared to your room");
     }
 
+    // Reject up front rather than accept a first signature that the second
+    // signer could never complete.
+    if (!validateNegotiationTransition(negotiation.status, NEGOTIATION_STATUS.TERMS_AGREED)) {
+      throw new Error(`Cannot sign terms while negotiation is ${negotiation.status}`);
+    }
+
     const existingSignature = await ctx.db
       .query("negotiation_terms_signatures")
       .withIndex("by_proposal_user", (q) =>

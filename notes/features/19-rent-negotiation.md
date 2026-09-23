@@ -237,6 +237,7 @@ Any state from ACTIVE onward → EXPIRED (system flags, admin confirms)
 | `TERMS_PROPOSED`            | `FAILED`                    | Ops marks failed                                                    | Admin          |
 | `TERMS_PROPOSED`            | `EXPIRED`                   | No activity for X days                                              | System/Admin   |
 | `COUNTER_PROPOSED`          | `TERMS_PROPOSED`            | Ops creates new proposal version                                    | Admin          |
+| `COUNTER_PROPOSED`          | `TERMS_AGREED`              | Both parties sign off on the current revised proposal               | Tenant + Owner |
 | `TERMS_AGREED`              | `TERMS_PROPOSED`            | Either party withdraws agreement (ops creates new proposal version) | Admin          |
 | `COUNTER_PROPOSED`          | `FAILED`                    | Ops marks failed                                                    | Admin          |
 | `TERMS_AGREED`              | `TOKEN_COLLECTED`           | Token advance recorded                                              | Admin          |

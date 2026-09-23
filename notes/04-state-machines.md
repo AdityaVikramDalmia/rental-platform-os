@@ -849,6 +849,7 @@ Expiry path: ACTIVE / TERMS_PROPOSED → EXPIRED.
 | `TERMS_PROPOSED`            | `FAILED`                    | Negotiation breaks down                      | Admin  |
 | `TERMS_PROPOSED`            | `EXPIRED`                   | No activity within configured stale window   | System |
 | `COUNTER_PROPOSED`          | `TERMS_PROPOSED`            | Ops issues revised proposal (cyclic loop)    | Admin  |
+| `COUNTER_PROPOSED`          | `TERMS_AGREED`              | Both parties sign the current revision       | Admin  |
 | `COUNTER_PROPOSED`          | `FAILED`                    | Negotiation breaks down                      | Admin  |
 | `TERMS_AGREED`              | `TOKEN_COLLECTED`           | Token advance recorded                       | Admin  |
 | `TERMS_AGREED`              | `TERMS_PROPOSED`            | Agreement withdrawn; proposal reopened       | Admin  |
@@ -865,6 +866,7 @@ Expiry path: ACTIVE / TERMS_PROPOSED → EXPIRED.
 **Key rules**:
 
 - `TERMS_PROPOSED ↔ COUNTER_PROPOSED` is an intentional negotiation cycle.
+- Sharing any proposal after the first sets `COUNTER_PROPOSED`; both signatures on that current version move it to `TERMS_AGREED`. Signatures on superseded versions never count, and signing is rejected in any status that cannot reach `TERMS_AGREED` (e.g. `STALLED`).
 - `READY_FOR_CLOSURE` is the handoff gate to closure lifecycle.
 - `STALLED` is an escalation marker state; it can only resume to `ACTIVE` or end in `FAILED`.
 

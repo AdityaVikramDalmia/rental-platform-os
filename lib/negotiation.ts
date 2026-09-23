@@ -29,6 +29,9 @@ export const VALID_NEGOTIATION_TRANSITIONS: Record<
   ],
   [NEGOTIATION_STATUS.COUNTER_PROPOSED]: [
     NEGOTIATION_STATUS.TERMS_PROPOSED,
+    // share() puts every revision after the first into COUNTER_PROPOSED; both
+    // signatures on that current shared version must be able to agree it.
+    NEGOTIATION_STATUS.TERMS_AGREED,
     NEGOTIATION_STATUS.STALLED,
     NEGOTIATION_STATUS.FAILED,
     NEGOTIATION_STATUS.EXPIRED,

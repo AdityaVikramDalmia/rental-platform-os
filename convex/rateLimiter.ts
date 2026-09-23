@@ -98,6 +98,11 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     rate: 20,
     period: 60 * 1000,
   },
+  "documents:upload_url_generation": {
+    kind: "fixed window",
+    rate: 20,
+    period: 60 * 1000,
+  },
   consume_invite: {
     kind: "fixed window",
     rate: 5,

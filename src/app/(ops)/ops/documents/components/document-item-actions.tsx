@@ -66,7 +66,10 @@ export function DocumentItemActions({ requirementId, item, onUploaded }: Documen
     setUploading(true);
 
     try {
-      const uploadUrl = await generateUploadUrl();
+      const uploadUrl = await generateUploadUrl({
+        requirement_id: requirementId,
+        item_id: item.item_id,
+      });
       const response = await fetch(uploadUrl, {
         method: "POST",
         headers: { "Content-Type": file.type },

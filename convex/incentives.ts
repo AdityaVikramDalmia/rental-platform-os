@@ -25,7 +25,7 @@ import {
 import { DAY_MS, getISTDateKey, getStartOfDayIST, getYesterdayISTDateKey } from "../lib/dates";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { requireAuth, requireFieldWorkerAuth, requirePermission } from "./auth.helpers";
+import { requireFieldWorkerAuth, requirePermission } from "./auth.helpers";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./functions";
 import {
@@ -2323,7 +2323,8 @@ export const getTopGuards = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
+    // Staff roster data: field workers only (admins use getLeaderboard).
+    await requireFieldWorkerAuth(ctx);
 
     const personaFilter = args.persona_filter ?? DEFAULT_LEADERBOARD_FILTER;
     const limit = normalizeLeaderboardLimit(args.limit, 5, 50);

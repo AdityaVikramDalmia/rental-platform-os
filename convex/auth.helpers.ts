@@ -256,6 +256,33 @@ export async function requireAnyPermission(
   return user;
 }
 
+/** Non-throwing permission lookup: the union of permissions across the user's active roles. */
+export async function getUserPermissionSet(
+  ctx: AuthContext,
+  userId: Id<"users">,
+): Promise<Set<string>> {
+  const assignments = await ctx.db
+    .query("user_role_assignments")
+    .withIndex("by_user_id", (q) => q.eq("user_id", userId))
+    .filter((q) => q.neq(q.field("is_deleted"), true))
+    .collect();
+
+  const roles = await Promise.all(assignments.map((assignment) => ctx.db.get(assignment.role_id)));
+  const permissions = new Set<string>();
+
+  for (const role of roles) {
+    if (!role || role.is_deleted) {
+      continue;
+    }
+
+    for (const rolePermission of role.permissions) {
+      permissions.add(rolePermission);
+    }
+  }
+
+  return permissions;
+}
+
 export async function addPersonaToUser(
   ctx: MutationCtx,
   userId: Id<"users">,

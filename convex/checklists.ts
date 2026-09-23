@@ -673,6 +673,27 @@ export const generateUploadUrl = mutation({
       throw new Error("Only guards, admins, or OPS can upload checklist photos");
     }
 
+    if (user.status !== "ACTIVE") {
+      throw new Error("Account not active");
+    }
+
+    // Photos are only attachable via updateResponse on an IN_PROGRESS checklist
+    // assigned to the caller, so only such a participant may mint upload URLs.
+    const activeAssignedChecklist = await ctx.db
+      .query("checklist_instances")
+      .withIndex("by_assigned_to", (q) => q.eq("assigned_to", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), CHECKLIST_STATUS.IN_PROGRESS),
+          q.neq(q.field("is_deleted"), true),
+        ),
+      )
+      .first();
+
+    if (!activeAssignedChecklist) {
+      throw new Error("No in-progress checklist assigned to you");
+    }
+
     await rateLimiter.limit(ctx, "checklist:upload_url_generation", {
       key: user._id,
       throws: true,

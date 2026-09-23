@@ -208,6 +208,22 @@ async function enrichTransaction(
   };
 }
 
+type EnrichedTransaction = Awaited<ReturnType<typeof enrichTransaction>>;
+
+// Tenant-facing shape: the tenant's own deal without the owner's contact record,
+// the closure's commission/brokerage data, inquiry ops fields, or override audit.
+function toTenantTransactionView(enriched: EnrichedTransaction): EnrichedTransaction {
+  return {
+    ...enriched,
+    last_override_reason: undefined,
+    last_override_by: undefined,
+    last_override_at: undefined,
+    owner: null,
+    inquiry: null,
+    closure: null,
+  };
+}
+
 export async function advanceTransactionStatusInternal(
   ctx: MutationCtx,
   transactionId: Id<"rental_transactions">,
@@ -833,6 +849,7 @@ export const getById = query({
     }
 
     let transaction: Doc<"rental_transactions">;
+    let isTenantView = false;
     if (user.user_types?.includes(USER_TYPE.TENANT) ?? user.user_type === USER_TYPE.TENANT) {
       const tenantAccessError = "Transaction not found or access denied";
       if (user.status !== USER_STATUS.ACTIVE) {
@@ -848,6 +865,7 @@ export const getById = query({
       if (transaction.tenant_user_id !== user._id) {
         throw new Error(tenantAccessError);
       }
+      isTenantView = true;
     } else {
       try {
         await requirePermission(ctx, PERMISSIONS.TRANSACTIONS_VIEW);
@@ -895,7 +913,7 @@ export const getById = query({
     const kycPacketResponse = stripStorageIdFields(kycPacket);
 
     return {
-      transaction: enriched,
+      transaction: isTenantView ? toTenantTransactionView(enriched) : enriched,
       agreement,
       kyc_packet: kycPacketResponse,
       token_booking: tokenBooking,
@@ -920,7 +938,9 @@ export const listByTenant = query({
       .paginate(args.paginationOpts);
 
     const page = await Promise.all(
-      paginated.page.map((transaction) => enrichTransaction(ctx, transaction)),
+      paginated.page.map(async (transaction) =>
+        toTenantTransactionView(await enrichTransaction(ctx, transaction)),
+      ),
     );
 
     return {

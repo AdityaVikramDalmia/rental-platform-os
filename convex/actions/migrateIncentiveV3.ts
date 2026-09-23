@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { INCENTIVE_PERSONA } from "../../lib/constants";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 
 const DEFAULT_BATCH_SIZE = 100;
 const MAX_BATCH_SIZE = 500;
@@ -118,7 +118,7 @@ function isConfirmedCard(card: {
   return reviewState === "confirmed";
 }
 
-export const run = action({
+export const run = internalAction({
   args: {
     dryRun: v.optional(v.boolean()),
     batchSize: v.optional(v.number()),
@@ -327,7 +327,7 @@ export const run = action({
   },
 });
 
-export const rollback = action({
+export const rollback = internalAction({
   args: {
     migration_run_id: v.string(),
     dryRun: v.optional(v.boolean()),

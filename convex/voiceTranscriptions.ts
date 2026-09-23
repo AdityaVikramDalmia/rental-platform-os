@@ -4,14 +4,15 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { action } from "./_generated/server";
 import { internalMutation, mutation, query } from "./functions";
-import { requireAuth } from "./auth.helpers";
+import { requireAuth, requireFieldWorkerAuth } from "./auth.helpers";
 import { USER_TYPE } from "../lib/constants";
 import { rateLimiter } from "./rateLimiter";
 
 export const generateAudioUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const user = await requireAuth(ctx);
+    // Voice notes are a field-worker (guard portal) feature.
+    const { user } = await requireFieldWorkerAuth(ctx);
     await rateLimiter.limit(ctx, "voice:upload_url", { key: user._id, throws: true });
     return await ctx.storage.generateUploadUrl();
   },
@@ -22,7 +23,8 @@ export const preTranscribeCheck = internalMutation({
     storageId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuth(ctx);
+    // Gates the paid transcription call in `transcribe`, which runs only after this.
+    const { user } = await requireFieldWorkerAuth(ctx);
     await rateLimiter.limit(ctx, "voice:transcribe", { key: user._id, throws: true });
 
     const existing = await ctx.db

@@ -141,6 +141,16 @@ export const createOpsAccount = action({
       throw new Error(`Missing permission: ${PERMISSIONS.GUARDS_CREATE}`);
     }
 
+    // An OPS account is created holding the Ops Agent role, so the caller must also
+    // be allowed to grant roles; guards.create alone must not mint that role.
+    const roleGrantResult = await ctx.runQuery(internal.guards.checkPermission, {
+      permission: PERMISSIONS.ROLES_MANAGE,
+    });
+
+    if (!roleGrantResult.authorized) {
+      throw new Error(`Missing permission: ${PERMISSIONS.ROLES_MANAGE}`);
+    }
+
     const phone = normalizePhone(args.phone);
     const phoneCheck = await ctx.runQuery(internal.guards.checkOpsPhoneExists, {
       phone,
@@ -227,8 +237,17 @@ export const resetGuardPassword = action({
       throw new Error(`Missing permission: ${PERMISSIONS.GUARDS_RESET_PASSWORD}`);
     }
 
+    // The WorkOS id must belong to the guard being reset; never trust it from the client.
+    const guard = await ctx.runQuery(internal.guards.getGuardWorkosUserId, {
+      user_id: args.user_id,
+    });
+
+    if (guard.workos_user_id !== args.workos_user_id) {
+      throw new Error("Guard not found");
+    }
+
     await workos.userManagement.updateUser({
-      userId: args.workos_user_id,
+      userId: guard.workos_user_id,
       password: args.new_temp_password,
     });
 

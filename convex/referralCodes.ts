@@ -99,10 +99,10 @@ export const getByCode = query({
       return null;
     }
 
+    // Public and enumerable: expose only what the landing page needs, never the
+    // referrer's identity or the code record's internal ids.
     return {
-      referral_code: referralCode,
       referrer: {
-        name: referrer.name,
         owner_type: referrer.user_type,
       },
     };

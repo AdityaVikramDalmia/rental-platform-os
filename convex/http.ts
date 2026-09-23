@@ -180,7 +180,7 @@ http.route({
       );
       const normalizedPersonaType = parseSupportPersonaType(body.persona_type);
 
-      const id = await ctx.runMutation(api.supportInquiries.submit, {
+      const id = await ctx.runMutation(internal.supportInquiries.submit, {
         name: String(body.name ?? ""),
         email: String(body.email ?? ""),
         phone: body.phone ? String(body.phone) : undefined,

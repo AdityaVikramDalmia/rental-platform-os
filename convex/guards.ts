@@ -1765,6 +1765,26 @@ export const updateMyLanguage = mutation({
   },
 });
 
+// Resolves the WorkOS identity of a guard for a password reset; refuses non-guards
+// so a reset can never target an admin or OPS account.
+export const getGuardWorkosUserId = internalQuery({
+  args: {
+    user_id: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.user_id);
+
+    if (
+      !user ||
+      !(user.user_types?.includes(USER_TYPE.GUARD) ?? user.user_type === USER_TYPE.GUARD)
+    ) {
+      throw new Error("Guard not found");
+    }
+
+    return { workos_user_id: user.workos_user_id };
+  },
+});
+
 export const setMustChangePassword = internalMutation({
   args: {
     user_id: v.id("users"),

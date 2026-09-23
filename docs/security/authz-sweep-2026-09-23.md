@@ -1,6 +1,6 @@
 # Convex authorization sweep — 2026-09-23
 
-A review of every client-callable entry point in the Convex backend before the repository is made public: each exported `query`, `mutation` and `action` (internal functions excluded) and each HTTP route. Gaps outside the negotiation and deal-room area were fixed on branch `fix/authz-hardening`, and each fix has a regression test. Gaps inside that area are listed as **reported** because another change owns those files.
+A review of every client-callable entry point in the Convex backend before the repository is made public: each exported `query`, `mutation` and `action` (internal functions excluded) and each HTTP route. Gaps outside the negotiation and deal-room area were fixed on branch `fix/authz-hardening`, and each fix has a regression test. Gaps inside that area were fixed afterwards on branch `fix/deal-room-authz` (`09eb83c`, tests in `convex/dealRoomAuthz.test.ts`); their rows are marked **c (fixed, deal room)**.
 
 ## Method
 
@@ -20,7 +20,7 @@ A review of every client-callable entry point in the Convex backend before the r
 | a            | Public by design (no login). Returns public-safe fields only; writes are rate-limited.                                           |
 | b            | Authenticated and correctly scoped: a role permission, a persona gate for a self-only record, or an ownership/participant check. |
 | c (fixed)    | A gap, fixed in this change.                                                                                                     |
-| c (reported) | A gap in the negotiation/deal-room area, reported rather than fixed (owned by another change).                                   |
+| c (fixed, deal room) | A gap in the negotiation/deal-room area, fixed by the follow-up change `09eb83c`.                                   |
 
 Rows in class b sometimes carry a note, such as a separation-of-duties observation. These notes are reported for follow-up and do not count as gaps. Examples: a person holding a money-moving permission can act on their own record, or a read leaks whether a record exists.
 
@@ -33,7 +33,7 @@ Rows in class b sometimes carry a note, such as a separation-of-duties observati
 | b — gated                                      | 490 (17 carry a follow-up note)            |
 | c (fixed) — still public, now gated or trimmed | 26                                         |
 | c (fixed) — made internal                      | 3                                          |
-| c (reported) — negotiation/deal-room area      | 7                                          |
+| c (fixed, deal room) — negotiation/deal-room area | 7                                          |
 | HTTP routes                                    | 5, plus the auth provider's webhook routes |
 
 ## Gaps fixed
@@ -64,7 +64,9 @@ Rows in class b sometimes carry a note, such as a separation-of-duties observati
 
 The tests are in `convex/authzHardening.test.ts` and `convex/authzHardening.workos.test.ts`. The WorkOS client is mocked; no network calls are made.
 
-## Reported, not fixed
+## Deal-room gaps (fixed in `09eb83c`)
+
+Room access is now decided from the caller's role in the inquiry (tenant of record, or owner of the listing), not the switchable active persona; backoffice access needs the calling function's permission. A user who is both tenant and owner of the same inquiry sees only rooms visible to both roles.
 
 | Function                                                                                                                         | Location                                                                                                     | Finding                                                                                                                                                                                                                                                                                                                                                                                                              | Reason not fixed                        |
 | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -194,8 +196,8 @@ The tests are in `convex/authzHardening.test.ts` and `convex/authzHardening.work
 | `create` | mutation | 255 | perm: chat.admin | b |  |
 | `archive` | mutation | 286 | perm: chat.admin | b |  |
 | `reopen` | mutation | 315 | perm: chat.admin | b |  |
-| `getByInquiryId` | query | 360 | perm: chat.view; requireAuth, requireChatParticipant | c (reported) | Room visibility uses the switchable active persona; a tenant who also holds OWNER can reach the ops-owner room. Deal-room area: reported, not fixed. |
-| `getById` | query | 404 | perm: chat.view, chat.view for backoffice; tenant/owner scoped to own inquiries/listings (shared handler); requireAuth, requireChatParticipant | c (reported) | Same active-persona room check (requireChatParticipant). Reported, not fixed. |
+| `getByInquiryId` | query | 360 | perm: chat.view; requireAuth, requireChatParticipant | c (fixed, deal room) | Room visibility uses the switchable active persona; a tenant who also holds OWNER can reach the ops-owner room. Fixed in `09eb83c`. |
+| `getById` | query | 404 | perm: chat.view, chat.view for backoffice; tenant/owner scoped to own inquiries/listings (shared handler); requireAuth, requireChatParticipant | c (fixed, deal room) | Same active-persona room check (requireChatParticipant). Fixed in `09eb83c`. |
 | `listMyChannels` | query | 735 | perm: chat.view for backoffice; tenant/owner scoped to own inquiries/listings (shared handler) | b |  |
 | `listForOwner` | query | 748 | perm: chat.view for backoffice; tenant/owner scoped to own inquiries/listings (shared handler) | b |  |
 | `getByInquiryForTenant` | query | 761 | requireTenant, requireChatParticipant | b |  |
@@ -206,11 +208,11 @@ The tests are in `convex/authzHardening.test.ts` and `convex/authzHardening.work
 
 | Function | Type | Line | Gate | Class | Action / note |
 |---|---|---|---|---|---|
-| `send` | mutation | 57 | perm: chat.send; requireAuth, requireChatParticipant, rateLimiter.limit | c (reported) | Same active-persona room check; sender_role also from active persona. Reported, not fixed. |
+| `send` | mutation | 57 | perm: chat.send; requireAuth, requireChatParticipant, rateLimiter.limit | c (fixed, deal room) | Same active-persona room check; sender_role also from active persona. Fixed in `09eb83c`. |
 | `sendAsAdmin` | mutation | 160 | perm: chat.admin | b |  |
 | `sendImpersonated` | mutation | 202 | perm: chat.admin | b |  |
-| `listByChannel` | query | 320 | perm: chat.view; requireAuth, requireChatParticipant | c (reported) | Same active-persona room check. Reported, not fixed. |
-| `getById` | query | 369 | perm: chat.view; requireAuth, requireChatParticipant | c (reported) | Same active-persona room check. Reported, not fixed. |
+| `listByChannel` | query | 320 | perm: chat.view; requireAuth, requireChatParticipant | c (fixed, deal room) | Same active-persona room check. Fixed in `09eb83c`. |
+| `getById` | query | 369 | perm: chat.view; requireAuth, requireChatParticipant | c (fixed, deal room) | Same active-persona room check. Fixed in `09eb83c`. |
 | `softDeleteMessage` | mutation | 399 | perm: chat.admin | b |  |
 | `getFullTranscript` | query | 423 | perm: chat.admin | b |  |
 
@@ -305,8 +307,8 @@ The tests are in `convex/authzHardening.test.ts` and `convex/authzHardening.work
 | `editItem` | mutation | 487 | perm: deal_checklists.manage | b |  |
 | `share` | mutation | 537 | perm: deal_checklists.manage | b |  |
 | `regenerate` | mutation | 599 | perm: deal_checklists.manage | b |  |
-| `getByInquiry` | query | 677 | perm: deal_checklists.view; requireAuth, ensureChecklistReadAccess | c (reported) | Legacy user_type check lets a multi-persona backoffice user skip deal_checklists.view. Reported, not fixed. |
-| `getById` | query | 727 | requireAuth, requireBackoffice, ensureChecklistReadAccess | c (reported) | Same legacy user_type bypass. Reported, not fixed. |
+| `getByInquiry` | query | 677 | perm: deal_checklists.view; requireAuth, ensureChecklistReadAccess | c (fixed, deal room) | Legacy user_type check lets a multi-persona backoffice user skip deal_checklists.view. Fixed in `09eb83c`. |
+| `getById` | query | 727 | requireAuth, requireBackoffice, ensureChecklistReadAccess | c (fixed, deal room) | Same legacy user_type bypass. Fixed in `09eb83c`. |
 | `listVersions` | query | 763 | perm: deal_checklists.view | b |  |
 
 ### convex/dealContributions.ts

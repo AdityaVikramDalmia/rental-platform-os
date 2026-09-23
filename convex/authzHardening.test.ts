@@ -815,22 +815,29 @@ describe("authorization hardening", () => {
       const t = createTest();
       const agent = await createUser(t, "OPS");
       const manager = await createUser(t, "ADMIN", [PERMISSIONS.OPS_MANAGEMENT_ISSUE_WARNINGS]);
-      const warningId = await t.run(async (ctx) => {
+      const [warningId, deletedWarningId] = await t.run(async (ctx) => {
         const now = Date.now();
-        return await ctx.db.insert("ops_warnings", {
+        const base = {
           agent_user_id: agent.userId,
-          issued_by_type: "SYSTEM",
+          issued_by_type: "SYSTEM" as const,
           warning_level: 1,
-          trigger_type: "AUTO",
-          trigger_reason: "MISSED_TARGETS",
+          trigger_type: "AUTO" as const,
+          trigger_reason: "MISSED_TARGETS" as const,
           description: "Missed weekly target",
-          status: "ACTIVE",
+          status: "ACTIVE" as const,
           created_at: now,
           updated_at: now,
-          is_deleted: false,
-        });
+        };
+        return [
+          await ctx.db.insert("ops_warnings", { ...base, is_deleted: false }),
+          await ctx.db.insert("ops_warnings", { ...base, is_deleted: true }),
+        ] as const;
       });
 
+      // An anonymous caller must not learn whether a warning id exists.
+      await expect(
+        t.mutation(api.opsManagement.acknowledgeWarning, { warning_id: deletedWarningId }),
+      ).rejects.toThrow("Not authenticated");
       await expect(
         t.mutation(api.opsManagement.acknowledgeWarning, { warning_id: warningId }),
       ).rejects.toThrow("Not authenticated");

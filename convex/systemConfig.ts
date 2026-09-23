@@ -10,7 +10,7 @@ import {
 } from "../lib/constants";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
-import { requireAdmin, requireBackoffice, requirePermission } from "./auth.helpers";
+import { requireBackoffice, requirePermission } from "./auth.helpers";
 import { resolveP44RolloutState } from "./fieldWorkerRollout";
 import { mutation, query } from "./functions";
 import { getSystemConfigBoolean, getSystemConfigStringArray } from "./systemConfig.helpers";
@@ -159,7 +159,7 @@ export const getAll = query({
 export const getOpsFieldWorkerRollout = query({
   args: {},
   handler: async (ctx): Promise<OpsRolloutConfigResponse> => {
-    await requireAdmin(ctx);
+    await requirePermission(ctx, PERMISSIONS.SYSTEM_CONFIGURE);
 
     const [rolloutState, enabled, canaryUserIds, activeOpsUsers, guardProfiles] = await Promise.all(
       [
@@ -238,7 +238,7 @@ export const setOpsFieldWorkerEnabled = mutation({
     enabled: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx);
+    const admin = await requirePermission(ctx, PERMISSIONS.SYSTEM_CONFIGURE);
 
     return await upsertSystemConfigValue(ctx, {
       key: OPS_FIELD_WORKER_ENABLED_KEY,
@@ -253,7 +253,7 @@ export const setOpsFieldWorkerCanaryUserIds = mutation({
     user_ids: v.array(v.id("users")),
   },
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx);
+    const admin = await requirePermission(ctx, PERMISSIONS.SYSTEM_CONFIGURE);
     const validCanaryUserIds = await validateOpsCanaryUserIds(ctx, args.user_ids);
 
     return await upsertSystemConfigValue(ctx, {
@@ -269,7 +269,7 @@ export const addOpsFieldWorkerCanaryUser = mutation({
     user_id: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx);
+    const admin = await requirePermission(ctx, PERMISSIONS.SYSTEM_CONFIGURE);
 
     const currentCanaryUserIds = await getSystemConfigStringArray(
       ctx,
@@ -295,7 +295,7 @@ export const removeOpsFieldWorkerCanaryUser = mutation({
     user_id: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const admin = await requireAdmin(ctx);
+    const admin = await requirePermission(ctx, PERMISSIONS.SYSTEM_CONFIGURE);
 
     const currentCanaryUserIds = await getSystemConfigStringArray(
       ctx,

@@ -1,7 +1,21 @@
 import { v } from "convex/values";
 import { PERMISSIONS } from "../lib/constants";
-import { requireAdmin, requireBackoffice, requirePermission } from "./auth.helpers";
+import type { Doc } from "./_generated/dataModel";
+import { requireAnyPermission, requireBackoffice, requirePermission } from "./auth.helpers";
 import { mutation, query } from "./functions";
+
+const ROLE_READ_PERMISSIONS = [PERMISSIONS.ROLES_VIEW, PERMISSIONS.ROLES_MANAGE];
+
+// Read shape for assignments: omits which admin granted the role.
+function toAssignmentView(assignment: Doc<"user_role_assignments">) {
+  return {
+    _id: assignment._id,
+    _creationTime: assignment._creationTime,
+    user_id: assignment.user_id,
+    role_id: assignment.role_id,
+    is_deleted: assignment.is_deleted,
+  };
+}
 
 export const assign = mutation({
   args: {
@@ -94,11 +108,12 @@ export const getByUserId = query({
   handler: async (ctx, args) => {
     const user = await requireBackoffice(ctx);
 
-    if (
-      (user.user_types?.includes("OPS") ?? user.user_type === "OPS") &&
-      args.user_id !== user._id
-    ) {
-      throw new Error("OPS users can only view their own role assignments");
+    if (args.user_id !== user._id) {
+      if (user.user_types?.includes("OPS") ?? user.user_type === "OPS") {
+        throw new Error("OPS users can only view their own role assignments");
+      }
+
+      await requireAnyPermission(ctx, ROLE_READ_PERMISSIONS);
     }
 
     const assignments = await ctx.db
@@ -116,7 +131,7 @@ export const getByUserId = query({
         }
 
         return {
-          ...assignment,
+          ...toAssignmentView(assignment),
           role,
         };
       }),
@@ -131,7 +146,7 @@ export const listByRole = query({
     role_id: v.id("roles"),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAnyPermission(ctx, ROLE_READ_PERMISSIONS);
 
     const assignments = await ctx.db
       .query("user_role_assignments")
@@ -148,8 +163,14 @@ export const listByRole = query({
         }
 
         return {
-          ...assignment,
-          user,
+          ...toAssignmentView(assignment),
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            user_type: user.user_type,
+            status: user.status,
+          },
         };
       }),
     );

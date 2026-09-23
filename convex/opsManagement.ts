@@ -15,7 +15,12 @@ import {
   VISIT_STATUS,
 } from "../lib/constants";
 import { v } from "convex/values";
-import { requireBackoffice, requireFieldWorker, requirePermission } from "./auth.helpers";
+import {
+  requireAuth,
+  requireBackoffice,
+  requireFieldWorker,
+  requirePermission,
+} from "./auth.helpers";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
@@ -2783,6 +2788,8 @@ export const acknowledgeWarning = mutation({
     warning_id: v.id("ops_warnings"),
   },
   handler: async (ctx, args) => {
+    await requireAuth(ctx);
+
     const warning = await ctx.db.get(args.warning_id);
     if (!warning || warning.is_deleted) {
       throw new Error("Warning not found");

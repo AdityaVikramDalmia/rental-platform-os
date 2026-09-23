@@ -105,6 +105,7 @@ export default function GuardsPage() {
 
   const hasGuardsViewPermission = permissionSet.has(PERMISSIONS.GUARDS_VIEW);
   const hasGuardsCreatePermission = permissionSet.has(PERMISSIONS.GUARDS_CREATE);
+  const canCreateOps = hasGuardsCreatePermission && permissionSet.has(PERMISSIONS.ROLES_MANAGE);
   const hasSocietiesViewPermission = permissionSet.has(PERMISSIONS.SOCIETIES_VIEW);
 
   const selectedStatus = statusFilter === "ALL" ? undefined : statusFilter;
@@ -209,15 +210,17 @@ export default function GuardsPage() {
 
         {hasGuardsCreatePermission ? (
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 border-slate-300 text-slate-700"
-              onClick={() => setIsCreateOpsDialogOpen(true)}
-            >
-              <Plus className="size-4" />
-              Add OPS
-            </Button>
+            {canCreateOps ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 border-slate-300 text-slate-700"
+                onClick={() => setIsCreateOpsDialogOpen(true)}
+              >
+                <Plus className="size-4" />
+                Add OPS
+              </Button>
+            ) : null}
 
             <Button
               type="button"
@@ -330,7 +333,7 @@ export default function GuardsPage() {
       {hasGuardsCreatePermission ? (
         <GuardCreateDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
       ) : null}
-      {hasGuardsCreatePermission ? (
+      {canCreateOps ? (
         <OpsCreateDialog open={isCreateOpsDialogOpen} action={setIsCreateOpsDialogOpen} />
       ) : null}
     </div>

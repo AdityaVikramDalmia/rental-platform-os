@@ -28,7 +28,6 @@ export const create = mutation({
     name: v.string(),
     description: v.optional(v.string()),
     permissions: v.array(v.string()),
-    is_system_role: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await requirePermission(ctx, PERMISSIONS.ROLES_MANAGE);
@@ -60,7 +59,8 @@ export const create = mutation({
       name,
       description: args.description?.trim() || undefined,
       permissions,
-      is_system_role: args.is_system_role ?? false,
+      // System roles are created only by the seed; they cannot be deleted or renamed.
+      is_system_role: false,
       is_deleted: false,
     });
   },

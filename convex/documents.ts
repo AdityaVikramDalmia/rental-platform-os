@@ -13,6 +13,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./functions";
+import { rateLimiter } from "./rateLimiter";
 
 const documentRequirementTypeValidator = v.union(
   v.literal(DOCUMENT_REQUIREMENT_TYPE.OWNER_DOCS),
@@ -523,7 +524,12 @@ export const updateNotes = mutation({
   handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
     const requirement = await getRequirementOrThrow(ctx, args.requirement_id);
-    assertCanReadRequirement(user, requirement);
+
+    // The assignee may annotate their own requirement; anyone else needs the
+    // same permission as the other requirement writes in this module.
+    if (requirement.assigned_to !== user._id) {
+      await requirePermission(ctx, PERMISSIONS.CLOSURES_EDIT);
+    }
 
     await ctx.db.patch(requirement._id, {
       notes: normalizeOptionalString(args.notes),
@@ -534,10 +540,30 @@ export const updateNotes = mutation({
 });
 
 export const generateUploadUrl = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    requirement_id: v.id("document_requirements"),
+    item_id: v.string(),
+  },
+  handler: async (ctx, args) => {
     const user = await requireAuth(ctx);
     assertBackofficeUser(user);
+
+    // Same participant rule as collectItem: only the assignee, only for an item
+    // that can still move to COLLECTED.
+    const requirement = await getRequirementOrThrow(ctx, args.requirement_id);
+    assertAssignedToUser(user, requirement);
+
+    const item = requirement.items.find((candidate) => candidate.item_id === args.item_id);
+    if (!item) {
+      throw new Error(`Document item not found: ${args.item_id}`);
+    }
+
+    assertValidTransition(item.status, DOCUMENT_ITEM_STATUS.COLLECTED);
+
+    await rateLimiter.limit(ctx, "documents:upload_url_generation", {
+      key: user._id,
+      throws: true,
+    });
 
     return await ctx.storage.generateUploadUrl();
   },

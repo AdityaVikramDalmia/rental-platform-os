@@ -1540,7 +1540,9 @@ export const getMyEarnings = query({
           flat_number: lead?.flat_number ?? "",
           confirmed_at: closure?.confirmed_at,
           disbursed_at: payout.disbursed_at,
-          payment_reference: payout.payment_reference,
+          // These rows are field-worker bounty payouts; their payment reference
+          // belongs to the payee and is never shown to the owner.
+          payment_reference: undefined,
         } satisfies OwnerEarningsRow,
         sortTs: payout.disbursed_at ?? payout._creationTime,
       };
@@ -1591,8 +1593,15 @@ export const getMyRmAssignment = query({
     const guardProfile = await ctx.db.get(activeAssignment.rm_guard_id);
     const guardUser = guardProfile ? await ctx.db.get(guardProfile.user_id) : null;
 
+    // Owner-facing shape: excludes the RM's internal performance/SLA/escalation data.
     return {
-      ...activeAssignment,
+      _id: activeAssignment._id,
+      owner_id: activeAssignment.owner_id,
+      status: activeAssignment.status,
+      last_check_in_at: activeAssignment.last_check_in_at,
+      next_check_in_due: activeAssignment.next_check_in_due,
+      check_in_frequency_days: activeAssignment.check_in_frequency_days,
+      created_at: activeAssignment.created_at,
       rm_name: guardUser?.name ?? null,
       rm_phone: guardUser?.phone ?? null,
     };

@@ -3,11 +3,13 @@ import { PERMISSIONS, SYSTEM_CONFIG_KEYS, USER_TYPE, type UserType } from "../li
 import {
   addPersonaToUser,
   getAuthenticatedUser,
+  getUserPermissionSet,
   requireAuth,
   requireBackoffice,
   requireGuard,
   requirePermission,
 } from "./auth.helpers";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./functions";
 import { rateLimiter } from "./rateLimiter";
 import { getSystemConfigBoolean } from "./systemConfig.helpers";
@@ -279,13 +281,36 @@ export const getById = query({
   handler: async (ctx, args) => {
     const user = await requireBackoffice(ctx);
 
-    if (user.user_type === "OPS" && args.id !== user._id) {
+    if (args.id === user._id) {
+      return toUserSummary(user, true);
+    }
+
+    if (user.user_type === "OPS") {
       throw new Error("OPS users can only view their own user record");
     }
 
-    return await ctx.db.get(args.id);
+    const target = await ctx.db.get(args.id);
+
+    if (!target) {
+      return null;
+    }
+
+    const permissions = await getUserPermissionSet(ctx, user._id);
+
+    return toUserSummary(target, permissions.has(PERMISSIONS.USERS_MANAGE));
   },
 });
+
+// Display lookup only: identity-provider ids and account flags never leave this
+// query, and contact details require users.manage for anyone but the caller.
+function toUserSummary(user: Doc<"users">, includeContact: boolean) {
+  return {
+    _id: user._id,
+    name: user.name,
+    email: includeContact ? user.email : undefined,
+    phone: includeContact ? user.phone : undefined,
+  };
+}
 
 export const updateProfile = mutation({
   args: {

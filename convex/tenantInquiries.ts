@@ -637,7 +637,8 @@ export const acceptBounty = mutation({
       }
     }
 
-    return await ctx.db.get(args.id);
+    // Field workers never receive the tenant's contact details or ops notes.
+    return { _id: args.id, status: TENANT_INQUIRY_STATUS.GUARD_ACCEPTED };
   },
 });
 
@@ -1025,6 +1026,23 @@ export const getStatusCounts = query({
   },
 });
 
+// What a field worker may see of an inquiry: scheduling and bounty data only,
+// never the tenant's identity/contact details or internal ops fields.
+function toFieldWorkerInquiryView(inquiry: Doc<"tenant_inquiries">) {
+  return {
+    _id: inquiry._id,
+    _creationTime: inquiry._creationTime,
+    listing_id: inquiry.listing_id,
+    bounty_amount: inquiry.bounty_amount,
+    status: inquiry.status,
+    created_at: inquiry._creationTime,
+    preferred_visit_date: inquiry.preferred_visit_date,
+    preferred_visit_slot: inquiry.preferred_visit_slot,
+    bounty_posted_at: inquiry.bounty_posted_at,
+    bounty_expires_at: inquiry.bounty_expires_at,
+  };
+}
+
 export const listBounties = query({
   args: {
     tab: v.union(v.literal("available"), v.literal("accepted")),
@@ -1097,7 +1115,7 @@ export const listBounties = query({
         const society = lead ? await ctx.db.get(lead.society_id) : null;
 
         return {
-          ...inquiry,
+          ...toFieldWorkerInquiryView(inquiry),
           listing_bhk: listing?.bhk_config ?? null,
           listing_rent: listing?.rent_monthly ?? null,
           listing_slug: listing?.slug ?? null,
@@ -1138,13 +1156,14 @@ export const listByGuard = query({
         const context = await getInquiryContext(ctx, inquiry);
 
         return {
-          ...inquiry,
-          listing: context.listing,
-          lead: context.lead,
-          building: context.building,
-          society: context.society,
-          guard: context.guard,
-          visit: context.visit,
+          ...toFieldWorkerInquiryView(inquiry),
+          visit: context.visit
+            ? {
+                scheduled_start: context.visit.scheduled_start,
+                scheduled_end: context.visit.scheduled_end,
+                outcome: context.visit.outcome,
+              }
+            : null,
           listing_bhk: context.listing?.bhk_config ?? null,
           listing_rent: context.listing?.rent_monthly ?? null,
           listing_slug: context.listing?.slug ?? null,

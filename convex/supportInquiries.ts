@@ -11,7 +11,7 @@ import { normalizePhone } from "../lib/validators";
 import { requirePermission } from "./auth.helpers";
 import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
-import { mutation, query } from "./functions";
+import { internalMutation, mutation, query } from "./functions";
 import { rateLimiter } from "./rateLimiter";
 
 const supportInquiryStatusValidator = v.union(
@@ -74,7 +74,8 @@ async function enrichInquiry(ctx: QueryCtx, inquiry: Doc<"support_inquiries">) {
   };
 }
 
-export const submit = mutation({
+// Internal: the only entry point is the public contact-form HTTP route (convex/http.ts).
+export const submit = internalMutation({
   args: {
     name: v.string(),
     email: v.string(),

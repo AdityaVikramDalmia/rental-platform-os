@@ -35,6 +35,17 @@ export function validateBatchTransition(current: ChatBatchStatus, next: ChatBatc
   return (valid[current] ?? []).includes(next);
 }
 
+// Structured system messages carry ids after a prefix; list previews show them as plain text.
+const SYSTEM_MESSAGE_PREVIEWS: ReadonlyArray<readonly [prefix: string, preview: string]> = [
+  ["NEGOTIATION_PROPOSAL_SHARED:", "Terms proposal shared"],
+  ["CHECKLIST_SHARED:", "Checklist shared"],
+];
+
+export function formatChannelPreview(content: string): string {
+  const match = SYSTEM_MESSAGE_PREVIEWS.find(([prefix]) => content.startsWith(prefix));
+  return match ? match[1] : content;
+}
+
 export type PIIMatch = {
   type: "PHONE" | "EMAIL" | "SOCIAL_HANDLE" | "WHATSAPP" | "AADHAAR" | "PAN";
   value: string;

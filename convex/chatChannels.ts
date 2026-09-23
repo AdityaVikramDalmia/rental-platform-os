@@ -8,7 +8,7 @@ import {
   type UserType,
   USER_TYPE,
 } from "../lib/constants";
-import { validateChannelTransition } from "../lib/chat";
+import { formatChannelPreview, validateChannelTransition } from "../lib/chat";
 import { requireAuth, requirePermission, requireTenant } from "./auth.helpers";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
@@ -707,9 +707,11 @@ async function buildChannelListRows(
 
       const isSender = latestDeliveredMessage?.sender_user_id.toString() === user._id.toString();
       const lastMessagePreview = latestDeliveredMessage
-        ? isSender
-          ? latestDeliveredMessage.original_content
-          : (latestDeliveredMessage.masked_content ?? "Message processing...")
+        ? formatChannelPreview(
+            isSender
+              ? latestDeliveredMessage.original_content
+              : (latestDeliveredMessage.masked_content ?? "Message processing..."),
+          )
         : null;
 
       const lastMessageAt =

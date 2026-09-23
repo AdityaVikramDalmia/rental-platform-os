@@ -15,26 +15,26 @@ A review of every client-callable entry point in the Convex backend before the r
 
 ## Classes
 
-| Class        | Meaning                                                                                                                          |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| a            | Public by design (no login). Returns public-safe fields only; writes are rate-limited.                                           |
-| b            | Authenticated and correctly scoped: a role permission, a persona gate for a self-only record, or an ownership/participant check. |
-| c (fixed)    | A gap, fixed in this change.                                                                                                     |
-| c (fixed, deal room) | A gap in the negotiation/deal-room area, fixed by the follow-up change `09eb83c`.                                   |
+| Class                | Meaning                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| a                    | Public by design (no login). Returns public-safe fields only; writes are rate-limited.                                           |
+| b                    | Authenticated and correctly scoped: a role permission, a persona gate for a self-only record, or an ownership/participant check. |
+| c (fixed)            | A gap, fixed in this change.                                                                                                     |
+| c (fixed, deal room) | A gap in the negotiation/deal-room area, fixed by the follow-up change `09eb83c`.                                                |
 
 Rows in class b sometimes carry a note, such as a separation-of-duties observation. These notes are reported for follow-up and do not count as gaps. Examples: a person holding a money-moving permission can act on their own record, or a read leaks whether a record exists.
 
 ## Summary
 
-|                                                | Count                                      |
-| ---------------------------------------------- | ------------------------------------------ |
-| Public functions reviewed (after this change)  | 533                                        |
-| a — public by design                           | 10                                         |
-| b — gated                                      | 490 (17 carry a follow-up note)            |
-| c (fixed) — still public, now gated or trimmed | 26                                         |
-| c (fixed) — made internal                      | 3                                          |
+|                                                   | Count                                      |
+| ------------------------------------------------- | ------------------------------------------ |
+| Public functions reviewed (after this change)     | 533                                        |
+| a — public by design                              | 10                                         |
+| b — gated                                         | 490 (17 carry a follow-up note)            |
+| c (fixed) — still public, now gated or trimmed    | 26                                         |
+| c (fixed) — made internal                         | 3                                          |
 | c (fixed, deal room) — negotiation/deal-room area | 7                                          |
-| HTTP routes                                    | 5, plus the auth provider's webhook routes |
+| HTTP routes                                       | 5, plus the auth provider's webhook routes |
 
 ## Gaps fixed
 

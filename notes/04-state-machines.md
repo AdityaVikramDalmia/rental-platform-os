@@ -866,6 +866,7 @@ Expiry path: ACTIVE / TERMS_PROPOSED → EXPIRED.
 **Key rules**:
 
 - `TERMS_PROPOSED ↔ COUNTER_PROPOSED` is an intentional negotiation cycle.
+- Sharing any proposal after the first sets `COUNTER_PROPOSED`; both signatures on that current version move it to `TERMS_AGREED`. Signatures on superseded versions never count, and signing is rejected in any status that cannot reach `TERMS_AGREED` (e.g. `STALLED`).
 - `READY_FOR_CLOSURE` is the handoff gate to closure lifecycle.
 - `STALLED` is an escalation marker state; it can only resume to `ACTIVE` or end in `FAILED`.
 

@@ -327,3 +327,47 @@ describe("negotiationProposals.signTerms bilateral completion", () => {
   });
 });
 
+describe("negotiationProposals.signTerms while STALLED", () => {
+  it("rejects a signature up front instead of recording one that cannot complete", async () => {
+    const t = createTestBackend();
+    const fixture = await createNegotiationFixture(t);
+
+    const proposalId = await createAndShareProposal(fixture, 3_000_000);
+    await fixture.admin.mutation(api.negotiations.markStalled, {
+      negotiation_id: fixture.negotiationId,
+      failure_reason: "Parties unresponsive",
+    });
+
+    await expect(sign(fixture.tenant, proposalId)).rejects.toThrow(
+      "Cannot sign terms while negotiation is STALLED",
+    );
+    await expect(sign(fixture.owner, proposalId)).rejects.toThrow(
+      "Cannot sign terms while negotiation is STALLED",
+    );
+
+    const state = await readState(t, fixture.negotiationId, proposalId);
+    expect(state.negotiation?.status).toBe(NEGOTIATION_STATUS.STALLED);
+    expect(state.proposal?.status).toBe(NEGOTIATION_PROPOSAL_STATUS.SHARED);
+    expect(state.signatures).toEqual([]);
+  });
+
+  it("resumes through a shared revision that both parties can then agree", async () => {
+    const t = createTestBackend();
+    const fixture = await createNegotiationFixture(t);
+
+    await createAndShareProposal(fixture, 3_000_000);
+    await fixture.admin.mutation(api.negotiations.markStalled, {
+      negotiation_id: fixture.negotiationId,
+      failure_reason: "Parties unresponsive",
+    });
+
+    const revisionId = await createAndShareProposal(fixture, 2_900_000);
+    const resumed = await readState(t, fixture.negotiationId, revisionId);
+    expect(resumed.negotiation?.status).toBe(NEGOTIATION_STATUS.COUNTER_PROPOSED);
+
+    await sign(fixture.owner, revisionId);
+    await sign(fixture.tenant, revisionId);
+
+    await expectTermsAgreed(t, fixture.negotiationId, revisionId);
+  });
+});

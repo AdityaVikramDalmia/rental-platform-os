@@ -1,10 +1,7 @@
 # Rental Platform OS
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-A prototype operating system for a residential rental company, published as a reference
-implementation. A single Next.js app serves a public listings site and five role-specific
-portals, all backed by one Convex database:
+A prototype operating system for a residential rental company. A single Next.js app serves a
+public listings site and five role-specific portals, all backed by one Convex database:
 
 | Portal     | Routes      | Who uses it                                                                                 |
 | ---------- | ----------- | ------------------------------------------------------------------------------------------- |
@@ -185,4 +182,5 @@ Every other dependency is installed from npm under its own licence. See `package
 
 ## Licence
 
-[MIT](LICENSE) © Aditya Dalmia
+© Aditya Dalmia. All rights reserved. No licence to use, copy, modify or distribute this code is granted
+at this time. The third-party components credited above remain under their own licences.

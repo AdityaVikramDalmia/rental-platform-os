@@ -35,3 +35,7 @@ After `create(payment_reference: "UTR-CREATE-7")` → `approve` → `disburse(me
 ## Root Cause
 
 `convex/payouts.ts:414` writes the (possibly undefined) argument instead of the same fallback the notification uses at `convex/payouts.ts:419-420`.
+
+## Fix
+
+In `payouts.disburse`, work out the reference once, as `normalizeOptionalString(args.payment_reference) ?? payout.payment_reference`. Use it both in the patch (`convex/payouts.ts:414`) and in the notification payload (`convex/payouts.ts:419-429`), so the stored record and the guard's message always agree. Then flip the BUG-041 test from `it.fails` to `it`.

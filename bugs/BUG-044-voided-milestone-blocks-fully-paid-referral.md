@@ -37,3 +37,7 @@ Referral status is `PARTIALLY_PAID`.
 ## Root Cause
 
 `convex/referralMilestones.ts:280-283` compares the paid count with all milestones instead of the non-voided ones.
+
+## Fix
+
+In `updateReferralStatusFromMilestones` (`convex/referralMilestones.ts:280-283`), leave VOIDED milestones out of the all-paid check: take `payable = milestones.filter((m) => m.status !== "VOIDED")` and set `allPaid = payable.length > 0 && paidCount === payable.length`. Keep `anyPaid` as it is. Then flip the BUG-044 test from `it.fails` to `it`.

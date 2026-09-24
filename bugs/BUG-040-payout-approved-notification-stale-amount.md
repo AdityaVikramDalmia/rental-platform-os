@@ -35,3 +35,7 @@ The `payout_approved` notification payload `amount_inr` is `"Rs 1,500"`, matchin
 ## Root Cause
 
 `convex/payouts.ts:380` uses the stale `payout` document instead of `finalAmount` computed at `convex/payouts.ts:363-364`.
+
+## Fix
+
+In `payouts.approve`, format the notification from the amount that was just approved: replace `payout.amount_paise` with `finalAmount` in the `amount_inr` payload (`convex/payouts.ts:380`). Then flip the BUG-040 test from `it.fails` to `it`.

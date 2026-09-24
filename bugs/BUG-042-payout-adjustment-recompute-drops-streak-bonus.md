@@ -37,3 +37,7 @@ The recomputed adjustment has `streak_bonus_paise: 0`.
 ## Root Cause
 
 The already-credited check at `convex/incentives.ts:1923-1927` does not exclude adjustments belonging to the payout being recomputed.
+
+## Fix
+
+Pass the payout id into `getEligibleStreakBonusPaise` (`convex/incentives.ts:1890`) and skip adjustments with that `payout_id` in the already-credited check (`convex/incentives.ts:1923-1927`). A recompute then judges the bonus as if this payout's adjustment were not there yet, which it won't be once the old row is soft-deleted at `convex/incentives.ts:2135-2143`. Then flip the BUG-042 test from `it.fails` to `it`.

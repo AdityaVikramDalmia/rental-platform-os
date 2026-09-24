@@ -35,3 +35,7 @@ After the freeze covers 2026-03-09, activity on 2026-03-10 continues the streak:
 ## Root Cause
 
 The freeze branch at `convex/gamification.ts:689-697` does not advance `last_streak_date` to the frozen day, which the continuation check at `convex/gamification.ts:225` depends on.
+
+## Fix
+
+In the freeze branch of `checkDailyStreaks` (`convex/gamification.ts:689-697`), also patch `last_streak_date: yesterdayKey`, so the frozen day counts as covered. Each nightly run can then spend at most one freeze per missed day. Activity the next day continues the streak through the `last_streak_date === yesterdayKey` check at `convex/gamification.ts:225`. Then flip the BUG-043 test from `it.fails` to `it`.

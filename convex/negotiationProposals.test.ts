@@ -371,3 +371,195 @@ describe("negotiationProposals.signTerms while STALLED", () => {
     await expectTermsAgreed(t, fixture.negotiationId, revisionId);
   });
 });
+
+describe("negotiationProposals.signTerms signer resolution", () => {
+  async function insertMultiPersonaUser(
+    t: TestBackend,
+    workosUserId: string,
+    primary: "TENANT" | "OWNER",
+    secondary: "TENANT" | "OWNER",
+  ) {
+    const userId = await t.run(async (ctx) =>
+      ctx.db.insert("users", {
+        workos_user_id: workosUserId,
+        user_type: primary,
+        user_types: [primary, secondary],
+        active_persona: secondary,
+        name: `Multi-persona ${workosUserId}`,
+        email: `${workosUserId}@example.com`,
+        status: USER_STATUS.ACTIVE,
+        must_change_password: false,
+      }),
+    );
+    return { userId, as: t.withIdentity({ subject: workosUserId, issuer: WORKOS_ISSUER }) };
+  }
+
+  it.fails(
+    "lets an owner linked through a secondary OWNER persona sign and complete TERMS_AGREED (BUG-050)",
+    async () => {
+      const t = createTestBackend();
+      const fixture = await createNegotiationFixture(t);
+      const secondaryOwner = await insertMultiPersonaUser(
+        t,
+        "user_negotiation_secondary_owner",
+        USER_TYPE.TENANT,
+        USER_TYPE.OWNER,
+      );
+      await t.run(async (ctx) => {
+        await ctx.db.patch(fixture.negotiationId, { owner_user_id: undefined });
+      });
+      await fixture.admin.mutation(api.negotiations.linkOwnerToNegotiation, {
+        negotiation_id: fixture.negotiationId,
+        owner_user_id: secondaryOwner.userId,
+      });
+
+      const proposalId = await createAndShareProposal(fixture, 3_000_000);
+      await sign(fixture.tenant, proposalId);
+      await secondaryOwner.as.mutation(api.negotiationProposals.signTerms, {
+        proposal_id: proposalId,
+        agreement_text: "I agree to these terms.",
+      });
+
+      await expectTermsAgreed(t, fixture.negotiationId, proposalId);
+    },
+  );
+
+  it.fails(
+    "lets the inquiry tenant sign when their primary persona is OWNER and TENANT is secondary (BUG-050)",
+    async () => {
+      const t = createTestBackend();
+      const fixture = await createNegotiationFixture(t);
+      await t.run(async (ctx) => {
+        const tenant = await ctx.db
+          .query("users")
+          .withIndex("by_workos_user_id", (q) => q.eq("workos_user_id", TENANT_WORKOS_ID))
+          .unique();
+        await ctx.db.patch(tenant!._id, {
+          user_type: USER_TYPE.OWNER,
+          user_types: [USER_TYPE.OWNER, USER_TYPE.TENANT],
+          active_persona: USER_TYPE.TENANT,
+        });
+      });
+
+      const proposalId = await createAndShareProposal(fixture, 3_000_000);
+      await sign(fixture.owner, proposalId);
+      await sign(fixture.tenant, proposalId);
+
+      await expectTermsAgreed(t, fixture.negotiationId, proposalId);
+    },
+  );
+
+  it("accepts a secondary-persona OWNER at link time, the step the signing check later contradicts", async () => {
+    const t = createTestBackend();
+    const fixture = await createNegotiationFixture(t);
+    const secondaryOwner = await insertMultiPersonaUser(
+      t,
+      "user_negotiation_linkable_owner",
+      USER_TYPE.TENANT,
+      USER_TYPE.OWNER,
+    );
+    const plainTenant = await t.run(async (ctx) =>
+      ctx.db.insert("users", {
+        workos_user_id: "user_negotiation_plain_tenant",
+        user_type: USER_TYPE.TENANT,
+        name: "Plain tenant",
+        status: USER_STATUS.ACTIVE,
+        must_change_password: false,
+      }),
+    );
+    await t.run(async (ctx) => {
+      await ctx.db.patch(fixture.negotiationId, { owner_user_id: undefined });
+    });
+
+    await expect(
+      fixture.admin.mutation(api.negotiations.linkOwnerToNegotiation, {
+        negotiation_id: fixture.negotiationId,
+        owner_user_id: plainTenant,
+      }),
+    ).rejects.toThrow("Linked user must be an OWNER");
+
+    await fixture.admin.mutation(api.negotiations.linkOwnerToNegotiation, {
+      negotiation_id: fixture.negotiationId,
+      owner_user_id: secondaryOwner.userId,
+    });
+    const linked = await t.run(async (ctx) => ctx.db.get(fixture.negotiationId));
+    expect(linked?.owner_user_id).toBe(secondaryOwner.userId);
+  });
+
+  it("rejects an OWNER who is not the linked owner while the linked owner still signs", async () => {
+    const t = createTestBackend();
+    const fixture = await createNegotiationFixture(t);
+    await t.run(async (ctx) =>
+      ctx.db.insert("users", {
+        workos_user_id: "user_negotiation_other_owner",
+        user_type: USER_TYPE.OWNER,
+        name: "Other owner",
+        status: USER_STATUS.ACTIVE,
+        must_change_password: false,
+      }),
+    );
+    const otherOwner = t.withIdentity({
+      subject: "user_negotiation_other_owner",
+      issuer: WORKOS_ISSUER,
+    });
+    const proposalId = await createAndShareProposal(fixture, 3_000_000);
+
+    await expect(sign(otherOwner, proposalId)).rejects.toThrow(
+      "Only linked tenant/owner can sign proposal terms",
+    );
+    await sign(fixture.owner, proposalId);
+
+    const state = await readState(t, fixture.negotiationId, proposalId);
+    expect(state.signatures.map((signature) => signature.user_role)).toEqual(["OWNER"]);
+  });
+
+  it("rejects a second signature by the same party on the same proposal", async () => {
+    const t = createTestBackend();
+    const fixture = await createNegotiationFixture(t);
+    const proposalId = await createAndShareProposal(fixture, 3_000_000);
+
+    await sign(fixture.tenant, proposalId);
+    await expect(sign(fixture.tenant, proposalId)).rejects.toThrow(
+      "You have already signed this proposal",
+    );
+
+    const state = await readState(t, fixture.negotiationId, proposalId);
+    expect(state.signatures).toHaveLength(1);
+    expect(state.negotiation?.status).toBe(NEGOTIATION_STATUS.TERMS_PROPOSED);
+  });
+
+  it("rejects an owner signature on a proposal shared only to the tenant room", async () => {
+    const t = createTestBackend();
+    const fixture = await createNegotiationFixture(t);
+    const proposalId = await fixture.admin.mutation(api.negotiationProposals.create, {
+      negotiation_id: fixture.negotiationId,
+      monthly_rent_paise: 3_000_000,
+      security_deposit_paise: 6_000_000,
+      security_deposit_months: 2,
+      lock_in_period_months: 11,
+      notice_period_months: 1,
+      move_in_date: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      maintenance_charges_paise: 250_000,
+      maintenance_paid_by: "TENANT",
+      rent_escalation_type: "NONE",
+      rent_escalation_value: 0,
+      furnishing_terms: "Unfurnished",
+      brokerage_tenant_side_paise: 0,
+      brokerage_owner_side_paise: 0,
+      token_advance_amount_paise: 0,
+    });
+    await fixture.admin.mutation(api.negotiationProposals.share, {
+      proposal_id: proposalId,
+      room_types: [NEGOTIATION_ROOM_TYPE.OPS_TENANT],
+    });
+
+    await expect(sign(fixture.owner, proposalId)).rejects.toThrow(
+      "Proposal is not shared to your room",
+    );
+    await sign(fixture.tenant, proposalId);
+
+    const state = await readState(t, fixture.negotiationId, proposalId);
+    expect(state.signatures.map((signature) => signature.user_role)).toEqual(["TENANT"]);
+    expect(state.proposal?.status).toBe(NEGOTIATION_PROPOSAL_STATUS.SHARED);
+  });
+});

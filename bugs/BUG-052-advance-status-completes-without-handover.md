@@ -11,13 +11,11 @@
 
 ## Description
 
-The transaction rails spec requires a completed transaction-linked handover checklist before move-in completion (`notes/features/26-transaction-completion-rails.md:389`, `:403`, `:423`). `rentalTransactions.complete()` enforces it (`convex/rentalTransactions.ts:683-718`, error at `:703`).
-
-`rentalTransactions.advanceStatus` (`convex/rentalTransactions.ts:482`) is the manual override path. It still runs `assertAdvanceStatusPrerequisites` (`convex/rentalTransactions.ts:271`), which gates `AGREEMENT_SIGNED`, `TOKEN_RECEIVED`, `DEPOSIT_RECEIVED` and `KYC_VERIFIED` (lines 276, 296, 315, 351), but has no case for `COMPLETED`. Any holder of `transactions.manage` can therefore move `MOVE_IN_SCHEDULED → COMPLETED` with only an override reason, with no checklist at all. The transaction's closure is also left unlinked, because the `closure.transaction_id` back-link lives only in `complete()`. `closures.confirm` checks only that the linked transaction is COMPLETED (`convex/closures.ts:886`), so this lets a closure, and the payout that follows it, go through without any record of the handover.
+The `rentalTransactions.advanceStatus` override moves a `MOVE_IN_SCHEDULED` transaction to `COMPLETED` with no handover checklist at all. That skips the gate `complete()` enforces, and lets a closure (and its payout) be confirmed without a recorded handover.
 
 ## Repro Steps
 
-1. `npx vitest run convex/rentalTransactions.test.ts -t "refuses COMPLETED without a completed handover checklist, as complete() does (BUG-052)"`
+1. `npx vitest run convex/rentalTransactions.test.ts -t "BUG-052"`
 
 This is an `it.fails` test: it passes while the bug exists and starts failing once it is fixed.
 
@@ -28,3 +26,13 @@ This is an `it.fails` test: it passes while the bug exists and starts failing on
 ## Actual
 
 The call succeeds and the transaction becomes `COMPLETED` with no `handover_checklists` record.
+
+## Root Cause
+
+The transaction rails spec requires a completed transaction-linked handover checklist before move-in completion (`notes/features/26-transaction-completion-rails.md:389`, `:403`, `:423`). `rentalTransactions.complete()` enforces it (`convex/rentalTransactions.ts:683-718`, error at `:703`).
+
+`advanceStatus` (`convex/rentalTransactions.ts:482`) still runs `assertAdvanceStatusPrerequisites` (`:271`), which gates `AGREEMENT_SIGNED`, `TOKEN_RECEIVED`, `DEPOSIT_RECEIVED` and `KYC_VERIFIED` (lines 276, 296, 315, 351). It has no case for `COMPLETED`. The closure's `transaction_id` back-link is written only in `complete()`, so this path also leaves the closure unlinked. `closures.confirm` checks only that the linked transaction is COMPLETED (`convex/closures.ts:886`).
+
+## Fix
+
+Not fixed yet. Proposed: add a `COMPLETED` case to `assertAdvanceStatusPrerequisites` that requires a non-deleted `handover_checklists` row for the transaction with `completed_at` set and every item checked, the same check `complete()` makes. Alternatively, have `advanceStatus` refuse `COMPLETED` and point callers to `complete()`, as it already does for `CANCELLED`.

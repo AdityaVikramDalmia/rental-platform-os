@@ -11,14 +11,11 @@
 
 ## Description
 
-`negotiationProposals.resolveSignerRole` (`convex/negotiationProposals.ts:234-250`) identifies the signer by the legacy primary `user.user_type` only (lines 236 and 243). The steps that put a user into a negotiation use the multi-persona list instead: `negotiations.linkOwnerToNegotiation` accepts any user whose `user_types` includes OWNER (`convex/negotiations.ts:454`), and negotiation initiation accepts a tenant whose `user_types` includes TENANT (`convex/negotiations.ts:307`). A user whose primary type is TENANT with OWNER added as a second persona (or the reverse) is therefore linked successfully but rejected at signing with "Only linked tenant/owner can sign proposal terms". Both signatures are required for `TERMS_AGREED`, so that negotiation can never get past terms.
-
-The same primary-type-only check appears in `negotiationProposals.getActiveProposal` (`convex/negotiationProposals.ts:914`, `:919`) and in `negotiationTokens.tenantAgreeToPolicy` / `getForNegotiation` (`convex/negotiationTokens.ts:94`, `:297-304`).
+A user can be linked to a negotiation as its owner or tenant through a secondary persona, but `signTerms` then rejects their signature. Both signatures are required, so the negotiation can never reach `TERMS_AGREED`.
 
 ## Repro Steps
 
-1. `npx vitest run convex/negotiationProposals.test.ts -t "lets an owner linked through a secondary OWNER persona sign and complete TERMS_AGREED (BUG-050)"`
-2. `npx vitest run convex/negotiationProposals.test.ts -t "lets the inquiry tenant sign when their primary persona is OWNER and TENANT is secondary (BUG-050)"`
+1. `npx vitest run convex/negotiationProposals.test.ts -t "BUG-050"` (selects both BUG-050 tests)
 
 Both are `it.fails` tests: they pass while the bug exists and start failing once it is fixed. To see the error, change `it.fails` to `it`.
 
@@ -29,3 +26,13 @@ The negotiation's linked tenant and owner can sign, whether they hold the role a
 ## Actual
 
 `signTerms` throws `Only linked tenant/owner can sign proposal terms` for the secondary-persona party. The proposal stays `SHARED` and the negotiation stays in `TERMS_PROPOSED`.
+
+## Root Cause
+
+`resolveSignerRole` (`convex/negotiationProposals.ts:234-250`) identifies the signer by the legacy primary `user.user_type` only (lines 236 and 243). The steps that put a user into a negotiation use the multi-persona list instead: `negotiations.linkOwnerToNegotiation` accepts any user whose `user_types` includes OWNER (`convex/negotiations.ts:454`), and negotiation initiation accepts a tenant whose `user_types` includes TENANT (`convex/negotiations.ts:307`). So a user whose primary type is TENANT with OWNER added as a second persona (or the reverse) is linked but rejected at signing.
+
+The same primary-type-only check appears in `negotiationProposals.getActiveProposal` (`convex/negotiationProposals.ts:914`, `:919`) and in `negotiationTokens.tenantAgreeToPolicy` / `getForNegotiation` (`convex/negotiationTokens.ts:94`, `:297-304`).
+
+## Fix
+
+Not fixed yet. Proposed: in `resolveSignerRole`, decide the role with the same persona form that linking uses, `user.user_types?.includes(USER_TYPE.TENANT) ?? user.user_type === USER_TYPE.TENANT` (and the OWNER equivalent), as in `convex/negotiations.ts:307` and `:454`. Keep the id match against `negotiation.tenant_user_id` / `owner_user_id`. Apply the same change to the other call sites listed above.

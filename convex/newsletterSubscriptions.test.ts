@@ -70,6 +70,7 @@ describe("newsletterSubscriptions", () => {
       });
     });
 
+    // Characterisation of current behaviour, not an endorsement: P15-E01 acceptance criterion 3 says source_page is set on insert only, which loses first-touch attribution.
     it("currently overwrites the original source_page on re-subscribe", async () => {
       const t = createTest();
 
@@ -90,6 +91,7 @@ describe("newsletterSubscriptions", () => {
       expect(await readRows(t)).toEqual([]);
     });
 
+    // Characterisation of current behaviour, not an endorsement: one shared budget lets anyone block every visitor's sign-up with 10 requests an hour.
     it("currently caps sign-ups site-wide at 10 per hour through the shared 'global' key", async () => {
       const t = createTest();
 

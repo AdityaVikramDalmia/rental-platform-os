@@ -66,9 +66,10 @@ describe("lib/dates", () => {
   });
 
   describe("formatDate", () => {
-    it("renders day, short month and year in the en-IN order", () => {
-      // 06:30 UTC is the same calendar day in UTC and IST, so this holds in either zone.
-      expect(formatDate(at("2026-03-15T06:30:00.000Z"))).toBe("15 Mar 2026");
+    it("renders the runtime-local calendar date as day, short month and year", () => {
+      // formatDate formats in the runtime's zone; local noon is 15 Mar in every TZ, DST included.
+      const localNoon = new Date(2026, 2, 15, 12, 0, 0).getTime();
+      expect(formatDate(localNoon)).toBe("15 Mar 2026");
     });
   });
 });

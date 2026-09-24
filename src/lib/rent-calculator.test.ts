@@ -62,6 +62,7 @@ describe("rent-calculator", () => {
       ).toBe(1000);
     });
 
+    // Characterisation of current behaviour, not an endorsement: negatives are clamped but the spec's 0–100% brokerage range is not.
     it("currently lets brokerage above 100% through uncapped", () => {
       expect(
         calculateRentCosts({ monthlyRent: 10000, depositMonths: 0, maintenance: 0, brokerage: 150 })
@@ -69,6 +70,7 @@ describe("rent-calculator", () => {
       ).toBe(15000);
     });
 
+    // Characterisation of current behaviour, not an endorsement: Math.max(0, NaN) is NaN, so the clamp that stops negatives lets NaN reach the UI.
     it("currently propagates NaN from a non-numeric input into every total", () => {
       const result = calculateRentCosts({
         monthlyRent: Number.NaN,

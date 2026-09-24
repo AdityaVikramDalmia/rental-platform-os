@@ -225,6 +225,8 @@ describe("tokenBookings", () => {
       expect(state.transaction?.status).toBe(TRANSACTION_STATUS.TOKEN_RECEIVED);
     });
 
+    // Characterisation of current behaviour, not an endorsement: a second hold with a different
+    // amount or refund policy is silently ignored instead of being rejected or recorded.
     it("currently returns the existing booking unchanged when hold is called again with a different amount", async () => {
       const t = createTestBackend();
       const fixture = await createTransactionFixture(t, TRANSACTION_STATUS.TOKEN_PENDING);
@@ -360,6 +362,8 @@ describe("tokenBookings", () => {
       );
     });
 
+    // Characterisation of current behaviour, not an endorsement: refundToken bypasses the token
+    // state machine, which (in code and in notes/04-state-machines.md) has no RECORDED → CANCELLED.
     it("currently cancels a RECORDED booking through refundToken although resolve() forbids RECORDED → CANCELLED", async () => {
       const t = createTestBackend();
       const fixture = await createTransactionFixture(t, TRANSACTION_STATUS.TOKEN_RECEIVED);

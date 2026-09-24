@@ -421,6 +421,8 @@ describe("deal read authorization", () => {
       });
     });
 
+    // Characterisation of current behaviour, not an endorsement: the null is returned before
+    // any persona or permission check, so any signed-in user can learn whether a packet exists.
     it("currently returns null to any signed-in caller before the persona gate when no packet exists", async () => {
       const t = createTestBackend();
       const fixture = await createDealFixture(t, { withKycPacket: false });
@@ -513,6 +515,8 @@ describe("deal read authorization", () => {
   });
 
   describe("documents.getById", () => {
+    // Characterisation of current behaviour, not an endorsement: canReadRequirement grants every
+    // ADMIN/OPS user on legacy user_type alone, with no role permission, unlike the module's writes.
     it("currently lets any ADMIN or OPS user read any requirement without a permission; others need the assignment", async () => {
       const t = createTestBackend();
       const fixture = await createDealFixture(t);
@@ -532,6 +536,8 @@ describe("deal read authorization", () => {
   });
 
   describe("checklists.getById", () => {
+    // Characterisation of current behaviour, not an endorsement: assertCanReadChecklist grants every
+    // ADMIN/OPS user on legacy user_type alone, with no role permission such as visits.view.
     it("currently lets any ADMIN or OPS user read any checklist without a permission; tenants, owners and other guards are refused", async () => {
       const t = createTestBackend();
       const fixture = await createDealFixture(t);

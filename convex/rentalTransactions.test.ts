@@ -517,6 +517,8 @@ describe("rentalTransactions", () => {
       expect((await readTransaction(t, completedId))?.status).toBe(TRANSACTION_STATUS.COMPLETED);
     });
 
+    // Characterisation of current behaviour, not an endorsement: the tenant's confirmed deposit
+    // and token are left as held money on a cancelled deal, with no refund or dispute started.
     it("currently cancels an idle DEPOSIT_RECEIVED transaction and leaves its confirmed deposit and token untouched", async () => {
       const t = createTestBackend();
       const fixture = await createListingFixture(t);

@@ -128,6 +128,16 @@ async function insertListing(
   );
 }
 
+// convex-test offsets inserts landing on an already-used millisecond by 0.001 ms. Inserting on a
+// fresh millisecond gives the listing an integer _creationTime, so day boundaries can be hit exactly.
+async function insertListingOnFreshMillisecond(t: TestBackend, fixture: LeadFixture) {
+  vi.setSystemTime(Date.now() + 60_000);
+  const listingId = await insertListing(t, fixture);
+  const createdAt = await t.run(async (ctx) => (await ctx.db.get(listingId))!._creationTime);
+  expect(createdAt).toBe(Date.now());
+  return { listingId, createdAt };
+}
+
 async function computeRow(t: TestBackend, listingId: Id<"listings">) {
   await t.mutation(internal.trustBadges.computeForListing, { listing_id: listingId });
   return await t.run(async (ctx) =>
@@ -164,35 +174,35 @@ describe("trustBadges", () => {
   });
 
   describe("computeForListing freshness", () => {
-    it("scores 100→75 across the 30-day window, drops to AGING just past it and to STALE past twice it", async () => {
+    it("scores 100→75 through exactly 30 days, is AGING 1 ms later and at exactly 60 days, and STALE 1 ms after that", async () => {
       const t = createTest();
       const fixture = await createLeadFixture(t);
-      const listingId = await insertListing(t, fixture);
+      const { listingId, createdAt } = await insertListingOnFreshMillisecond(t, fixture);
       const expectations: Array<[number, number, "FRESH" | "AGING" | "STALE"]> = [
         [0, 100, "FRESH"],
         [15 * DAY_MS, 88, "FRESH"],
         [30 * DAY_MS, 75, "FRESH"],
-        [30 * DAY_MS + HOUR_MS, 74, "AGING"],
+        [30 * DAY_MS + 1, 74, "AGING"],
         [60 * DAY_MS, 25, "AGING"],
-        [60 * DAY_MS + HOUR_MS, 24, "STALE"],
+        [60 * DAY_MS + 1, 24, "STALE"],
         [90 * DAY_MS, 0, "STALE"],
         [200 * DAY_MS, 0, "STALE"],
       ];
 
       for (const [elapsed, score, state] of expectations) {
-        vi.setSystemTime(BASE_TIME + elapsed);
+        vi.setSystemTime(createdAt + elapsed);
         const row = await computeRow(t, listingId);
         expect([row?.freshness_score, row?.freshness_state], `elapsed ${elapsed}ms`).toEqual([
           score,
           state,
         ]);
-        expect(row?.last_computed_at).toBe(BASE_TIME + elapsed);
+        expect(row?.last_computed_at).toBe(createdAt + elapsed);
       }
       const rows = await t.run(async (ctx) => ctx.db.query("listing_trust_badges").collect());
       expect(rows).toHaveLength(1);
     });
 
-    it("reads the window length from trust_badge_freshness_threshold_days", async () => {
+    it("reads the window length from trust_badge_freshness_threshold_days (FRESH at exactly 10 days, AGING 1 ms later)", async () => {
       const t = createTest();
       const fixture = await createLeadFixture(t);
       await t.run(async (ctx) =>
@@ -202,15 +212,18 @@ describe("trustBadges", () => {
           updated_by_admin_id: fixture.admin.userId,
         }),
       );
-      const listingId = await insertListing(t, fixture);
+      const { listingId, createdAt } = await insertListingOnFreshMillisecond(t, fixture);
 
-      vi.setSystemTime(BASE_TIME + 10 * DAY_MS);
+      vi.setSystemTime(createdAt + 10 * DAY_MS);
       const atThreshold = await computeRow(t, listingId);
-      vi.setSystemTime(BASE_TIME + 11 * DAY_MS);
-      const pastThreshold = await computeRow(t, listingId);
+      vi.setSystemTime(createdAt + 10 * DAY_MS + 1);
+      const justPastThreshold = await computeRow(t, listingId);
+      vi.setSystemTime(createdAt + 11 * DAY_MS);
+      const dayPastThreshold = await computeRow(t, listingId);
 
       expect(atThreshold).toMatchObject({ freshness_score: 75, freshness_state: "FRESH" });
-      expect(pastThreshold).toMatchObject({ freshness_score: 69, freshness_state: "AGING" });
+      expect(justPastThreshold).toMatchObject({ freshness_score: 74, freshness_state: "AGING" });
+      expect(dayPastThreshold).toMatchObject({ freshness_score: 69, freshness_state: "AGING" });
     });
 
     it("measures freshness from the latest activity, so a new photo on an old listing makes it fresh again", async () => {
@@ -390,7 +403,7 @@ describe("trustBadges", () => {
       const t = createTest();
       const fixture = await createLeadFixture(t);
       const staleListing = await insertListing(t, fixture);
-      vi.setSystemTime(BASE_TIME + 40 * DAY_MS);
+      vi.setSystemTime(BASE_TIME + 50 * DAY_MS);
       const agingListing = await insertListing(t, fixture);
       vi.setSystemTime(BASE_TIME + 100 * DAY_MS);
       const freshListing = await insertListing(t, fixture);

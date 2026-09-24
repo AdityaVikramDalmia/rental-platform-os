@@ -352,7 +352,8 @@ describe("visits", () => {
   });
 
   describe("forceComplete", () => {
-    it("completes an in-progress visit even though its checklist was never submitted (break-glass path)", async () => {
+    // Characterisation of current behaviour, not an endorsement: a single visits.edit holder can skip the checklist gate with no reason or second approver; notes/features/37-dynamic-checklist-engine.md:864-865 plans to remove this path.
+    it("currently completes an in-progress visit even though its checklist was never submitted (break-glass path)", async () => {
       const t = createTest();
       const fixture = await createVisitFixture(t);
       const visitId = await scheduleVisit(fixture);

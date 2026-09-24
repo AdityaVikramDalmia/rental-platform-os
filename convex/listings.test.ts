@@ -248,6 +248,7 @@ describe("listings", () => {
       expect(await t.run(async (ctx) => ctx.db.query("listings").collect())).toHaveLength(0);
     });
 
+    // Characterisation of current behaviour, not an endorsement: a published ₹0 rent is almost certainly a data-entry error, and rental transactions reject non-positive rent (convex/rentalTransactions.ts:154).
     it("currently accepts a monthly rent of 0 paise", async () => {
       const t = createTest();
       const fixture = await createPropertyFixture(t);

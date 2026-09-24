@@ -307,7 +307,8 @@ describe("ownerInvites", () => {
   });
 
   describe("consumeInvite", () => {
-    it("without an expected email, links whichever tenant holds the token as the owner and marks the join unverified", async () => {
+    // Characterisation of current behaviour, not an endorsement: without an expected email the token is a bearer credential, so anyone it is forwarded to becomes the listing's owner (only flagged via identity_verified: false).
+    it("currently links whichever tenant holds a token without an expected email as the owner and marks the join unverified", async () => {
       const t = createTest();
       const fixture = await createInviteFixture(t);
       const tenant = await createUser(t, "TENANT");
@@ -437,6 +438,7 @@ describe("ownerInvites", () => {
   });
 
   describe("expireStaleInvites", () => {
+    // Characterisation of current behaviour, not an endorsement: the cron uses `< now` (convex/ownerInvites.ts:514) while consume/getByToken use `<= now` (:263, :429), so the stored status lags the effective one at the edge.
     it("currently leaves an invite PENDING at exactly expires_at (while getByToken already reports EXPIRED) and expires it 1 ms later", async () => {
       const t = createTest();
       const fixture = await createInviteFixture(t);

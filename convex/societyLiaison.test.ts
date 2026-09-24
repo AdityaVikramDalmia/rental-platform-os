@@ -287,6 +287,7 @@ describe("societyLiaison", () => {
       ).rejects.toThrow("Invalid regulatory status transition: APPROVED -> WAIVED");
     });
 
+    // Characterisation of current behaviour, not an endorsement: the documented map (notes/04-state-machines.md:1186-1187) has no WAIVED edge from SUBMITTED or REJECTED, yet the code allows both (convex/societyLiaison.ts:37-43).
     it("currently allows waiving a SUBMITTED or REJECTED item", async () => {
       const t = createTest();
       const fixture = await createClosureFixture(t);

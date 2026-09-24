@@ -302,4 +302,4 @@ npm run lint
 - `convex/` directory exists but only has `_generated/` and `tsconfig.json` — no schema yet.
 - `lib/` is at project ROOT (shared). `src/lib/` is Next.js only (shadcn utils). Don't confuse them.
 - The Convex dev server must be running (`npx convex dev`) for schema pushes to work.
-- `.env.local` has `WORKOS_COOKIE_PASSWORD=REPLACE_WITH_32_CHAR_SECRET...` — needs manual replacement before auth works.
+- `.env.local` has `WORKOS_COOKIE_PASSWORD=<generate-a-random-string-of-at-least-32-characters> — needs manual replacement before auth works.

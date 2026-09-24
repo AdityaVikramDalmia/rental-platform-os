@@ -10,7 +10,7 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 
 process.env.WORKOS_CLIENT_ID ??= "client_test_disbursements";
-process.env.WORKOS_API_KEY ??= "sk_test_disbursements";
+process.env.WORKOS_API_KEY ??= "sk_test_authz";
 process.env.WORKOS_WEBHOOK_SECRET ??= "whsec_test_disbursements";
 
 const modules = (

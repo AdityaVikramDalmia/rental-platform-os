@@ -267,7 +267,7 @@ describe("payouts", () => {
             closure_id: fixture.closureId,
             amount_paise: amount,
           }),
-        ).rejects.toThrow("amount_paise must be a positive whole number in paise");
+        ).rejects.toThrow(/^amount_paise must be a positive whole number in paise$/);
       }
     });
 

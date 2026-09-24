@@ -17,6 +17,8 @@ describe("lib/money", () => {
       expect(rupeesToPaise(19.99)).toBe(1999);
     });
 
+    // Characterisation of current behaviour, not an endorsement: two inputs that are both exactly
+    // half a paisa on paper round in opposite directions, so ₹1.005 and ₹0.125 are treated differently.
     it("currently rounds half-paise inputs by their float representation, not half-up", () => {
       // 1.005 * 100 === 100.49999999999999 and 0.285 * 100 === 28.499999999999996,
       // while 0.125 * 100 is exactly 12.5; so "half a paisa" rounds down twice and up once.
@@ -25,6 +27,8 @@ describe("lib/money", () => {
       expect(rupeesToPaise(0.125)).toBe(13);
     });
 
+    // Characterisation of current behaviour, not an endorsement: -0 is not a meaningful paise
+    // amount, and it later renders as "-₹0" instead of "₹0".
     it("currently returns negative zero for a negative amount smaller than half a paisa", () => {
       expect(Object.is(rupeesToPaise(-0.001), -0)).toBe(true);
       expect(rupeesToPaise(-0.01)).toBe(-1);
@@ -50,6 +54,8 @@ describe("lib/money", () => {
       expect(formatINR(0)).toBe("₹0");
     });
 
+    // Characterisation of current behaviour, not an endorsement: a zero balance shown with a
+    // minus sign ("-₹0") reads as a debt to the user.
     it("currently prints a minus sign for the negative zero produced by a tiny negative amount", () => {
       expect(formatINR(rupeesToPaise(-0.001))).toBe("-₹0");
     });

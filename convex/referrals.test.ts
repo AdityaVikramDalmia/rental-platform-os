@@ -350,16 +350,26 @@ describe("referrals DemoRentals attribution", () => {
     it("only attributes accounts at most 48 hours old", async () => {
       const t = createReferralTest();
       await createDemoRentalsUser(t, "TENANT", { code: "FLAT-WNDW5" });
+      // convex-test adds 0.001 ms per insert at a frozen clock, so each account is created
+      // at its own whole millisecond to make its age exactly computable.
+      vi.setSystemTime(SIGNUP_TIME.getTime() + 1_000);
       const atLimit = await createDemoRentalsUser(t, "TENANT");
+      vi.setSystemTime(SIGNUP_TIME.getTime() + 2_000);
       const pastLimit = await createDemoRentalsUser(t, "TENANT");
+      const createdAt = async (userId: Id<"users">) =>
+        (await t.run(async (ctx) => ctx.db.get(userId)))!._creationTime;
+      const atLimitCreatedAt = await createdAt(atLimit.userId);
+      const pastLimitCreatedAt = await createdAt(pastLimit.userId);
+      expect(atLimitCreatedAt).toBe(SIGNUP_TIME.getTime() + 1_000);
+      expect(pastLimitCreatedAt).toBe(SIGNUP_TIME.getTime() + 2_000);
 
-      vi.setSystemTime(SIGNUP_TIME.getTime() + 48 * HOUR_MS);
+      vi.setSystemTime(atLimitCreatedAt + 48 * HOUR_MS);
       await atLimit.as.mutation(api.referrals.recordDemoRentalsReferral, {
         referral_code: "FLAT-WNDW5",
         referral_type: "TENANT_FINDING",
       });
 
-      vi.setSystemTime(SIGNUP_TIME.getTime() + 48 * HOUR_MS + 1);
+      vi.setSystemTime(pastLimitCreatedAt + 48 * HOUR_MS + 1);
       await expect(
         pastLimit.as.mutation(api.referrals.recordDemoRentalsReferral, {
           referral_code: "FLAT-WNDW5",

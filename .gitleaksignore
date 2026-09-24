@@ -1,0 +1,14 @@
+# Reviewed false positives in Git history (gitleaks fingerprints: commit:file:rule:line).
+# Nine are WORKOS_API_KEY stubs in test files (placeholders). One is a WORKOS_COOKIE_PASSWORD value in a setup
+# note, judged a placeholder (placeholder wording; matches no local environment file);
+# the current tree uses non-key-shaped placeholders (commit f67d763). History is intentionally not rewritten.
+969d02b276fd33a4983fc7c87b563c1cee2e538a:convex/newsletterSubscriptions.test.ts:stripe-access-token:9
+20224dcb35cc3fd1555add6971353118b02369bd:convex/negotiations.test.ts:stripe-access-token:25
+2337a7c120e06506139ac97fe6a9edfc1d09be54:convex/referralMilestones.test.ts:stripe-access-token:13
+cf12d1a6cccd49b81e5d54898f06aeaca6d5d2f2:convex/gamification.test.ts:stripe-access-token:13
+79fb0e7d7c2416bb63120c7726433a370d6ff5b8:convex/incentivePayoutAdjustment.test.ts:stripe-access-token:13
+355c2008992deb1f51b25181b7df92120605240a:convex/incentiveDisbursements.test.ts:stripe-access-token:13
+355c2008992deb1f51b25181b7df92120605240a:convex/attribution.test.ts:stripe-access-token:13
+b61d593fe4f4a37ce9f5d47d2ce53541d47dd6d2:convex/notifications.test.ts:stripe-access-token:13
+4c7b685bd686c096c83fdfd805b32f3409744272:convex/userRoleAssignments.test.ts:stripe-access-token:9
+4c7b685bd686c096c83fdfd805b32f3409744272:tasks/phase-01-auth/P01-E01-project-scaffolding.md:generic-api-key:305
